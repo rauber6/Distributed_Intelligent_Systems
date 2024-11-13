@@ -1,3 +1,8 @@
+#define TASK_A_PROB 0.33
+// #define TASK_B_PROB 0.66
+
+#define RAND ((float) rand()/RAND_MAX)
+
 #define strType(x) ((char) ((int)x + 65))
 
 typedef enum {
@@ -20,6 +25,13 @@ TaskType getType(int value) {
     } else {
         return UNKNOWN; // Return UNKNOWN for any other value
     }
+}
+
+TaskType generate_random_task() {
+    if(RAND <= TASK_A_PROB)
+      return TaskType::A;
+    else  
+      return TaskType::B;
 }
 
 double* getColor(TaskType t) {

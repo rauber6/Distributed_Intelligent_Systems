@@ -75,21 +75,7 @@ double expovariate(double mu) {
   return -log(uniform) * mu;
 }
 
-
-// --------- Random task generator ---------
-
-#define TASK_A_PROB 0.33
-// #define TASK_B_PROB 0.66
-
-TaskType generate_random_task() {
-    if(RAND <= TASK_A_PROB)
-      return TaskType::A;
-    else  
-      return TaskType::B;
-}
-
-// Define a distribution that produces values 1 and 2 with the specified probabilities
-
+// --------------------------------------
 
 // Event class
 class Event {
