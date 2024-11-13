@@ -1,0 +1,7 @@
+.vscode/settings.json
+.DS_Store
+
+# exclude build files
+controllers/*/build/
+controllers/e-puck/e-puck
+controllers/supervisor/supervisor

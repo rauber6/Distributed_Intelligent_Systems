@@ -31,8 +31,8 @@ PointLight {
 }
 Robot {
   children [
-    DEF emitter Emitter {
-      channel 1
+    DEF sup_emitter Emitter {
+      name "sup_emitter"
     }
     DEF rec1 Receiver {
       name "rec1"
@@ -84,7 +84,7 @@ Robot {
     }
   ]
   name "supervisor"
-  controller "threshold_super"
+  controller "supervisor"
   supervisor TRUE
 }
 DEF e0 Transform {
@@ -94,7 +94,7 @@ DEF e0 Transform {
     Shape {
       appearance Appearance {
         material Material {
-          diffuseColor 0 0 1
+          diffuseColor 0 0 0
         }
       }
       geometry Cylinder {
@@ -111,7 +111,7 @@ DEF e1 Transform {
     Shape {
       appearance Appearance {
         material Material {
-          diffuseColor 0 0 1
+          diffuseColor 0 0 0
         }
       }
       geometry Cylinder {
@@ -128,9 +128,7 @@ DEF e2 Transform {
     Shape {
       appearance Appearance {
         material Material {
-          ambientIntensity 0.5
-          diffuseColor 0 0 1
-          shininess 0.5
+          diffuseColor 0 0 0
         }
       }
       geometry Cylinder {
@@ -147,7 +145,7 @@ DEF e3 Transform {
     Shape {
       appearance Appearance {
         material Material {
-          diffuseColor 0 0 1
+          diffuseColor 0 0 0
         }
       }
       geometry Cylinder {
@@ -164,7 +162,7 @@ DEF e4 Transform {
     Shape {
       appearance Appearance {
         material Material {
-          diffuseColor 0 0 1
+          diffuseColor 0 0 0
         }
       }
       geometry Cylinder {
@@ -181,7 +179,7 @@ DEF e5 Transform {
     Shape {
       appearance Appearance {
         material Material {
-          diffuseColor 0 0 1
+          diffuseColor 0 0 0
         }
       }
       geometry Cylinder {
@@ -198,7 +196,7 @@ DEF e6 Transform {
     Shape {
       appearance Appearance {
         material Material {
-          diffuseColor 1 0 0
+          diffuseColor 0 0 0
         }
       }
       geometry Cylinder {
@@ -215,7 +213,7 @@ DEF e7 Transform {
     Shape {
       appearance Appearance {
         material Material {
-          diffuseColor 1 0 0
+          diffuseColor 0 0 0
         }
       }
       geometry Cylinder {
@@ -232,7 +230,7 @@ DEF e8 Transform {
     Shape {
       appearance Appearance {
         material Material {
-          diffuseColor 1 0 0
+          diffuseColor 0 0 0
         }
       }
       geometry Cylinder {
@@ -249,7 +247,7 @@ DEF e9 Transform {
     Shape {
       appearance Appearance {
         material Material {
-          diffuseColor 1 0 0
+          diffuseColor 0 0 0
         }
       }
       geometry Cylinder {
@@ -259,32 +257,33 @@ DEF e9 Transform {
     }
   ]
 }
-epuck_range {
+DEF e-puck(0) epuck_range {
   translation 0.259002 -0.1 -0.000112239
   rotation 2.5328875497210855e-06 -0.9999999999717659 -7.074790640191939e-06 0.000962939036823482
-  controller "reciever"
+  name "e-puck(0)"
+  controller "e-puck"
 }
-epuck_range {
+DEF e-puck(1) epuck_range {
   translation -0.21 -0.05 -6.3962e-05
   rotation 0.6827272638098751 -0.7306733081546841 9.856302523928403e-07 3.578580787255785e-09
   name "e-puck(1)"
-  controller "reciever"
+  controller "e-puck"
 }
-epuck_range {
+DEF e-puck(2) epuck_range {
   translation -0.1 -0.34 -6.3962e-05
   rotation 0.6827287797539088 -0.7306718916823538 -1.0341736665017168e-06 3.578585231465048e-09
   name "e-puck(2)"
-  controller "reciever"
+  controller "e-puck"
 }
-epuck_range {
+DEF e-puck(3) epuck_range {
   translation 9.92153e-11 0.32 -6.3962e-05
   rotation 0.682725681247687 -0.7306747868661172 -1.7424514968735983e-06 3.578578181166109e-09
   name "e-puck(3)"
-  controller "reciever"
+  controller "e-puck"
 }
-epuck_range {
+DEF e-puck(4) epuck_range {
   translation 9.921458359717937e-11 1.7762698410103202e-11 -6.396198619608787e-05
   rotation 0.6827253339456953 -0.7306751113787674 -6.038461811196375e-07 3.5785772366067095e-09
   name "e-puck(4)"
-  controller "emitter"
+  controller "e-puck"
 }
