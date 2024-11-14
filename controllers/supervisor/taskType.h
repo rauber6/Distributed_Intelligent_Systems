@@ -29,9 +29,9 @@ TaskType getType(int value) {
 
 TaskType generate_random_task() {
     if(RAND <= TASK_A_PROB)
-      return TaskType::A;
+      return A;
     else  
-      return TaskType::B;
+      return B;
 }
 
 double* getColor(TaskType t) {

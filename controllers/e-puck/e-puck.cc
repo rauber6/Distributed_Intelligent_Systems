@@ -118,7 +118,7 @@ static void receive_updates()
     int k;
 
     while (wb_receiver_get_queue_length(receiver_tag) > 0) {
-        const message_t *pmsg = wb_receiver_get_data(receiver_tag);
+        const message_t *pmsg = (const message_t *) wb_receiver_get_data(receiver_tag);
         
         // save a copy, cause wb_receiver_next_packet invalidates the pointer
         memcpy(&msg, pmsg, sizeof(message_t));
@@ -340,6 +340,7 @@ void reset(void)
     
     // Seed random generator
     srand(getpid());
+    
 
     // Reset stats
     stat_max_velocity = 0.0;
