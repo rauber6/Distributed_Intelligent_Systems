@@ -1,6 +1,5 @@
 .vscode/settings.json
 .DS_Store
-*.wbproj
 
 # exclude build files
 controllers/*/build/
