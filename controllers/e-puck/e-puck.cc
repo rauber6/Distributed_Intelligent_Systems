@@ -212,23 +212,22 @@ static void receive_updates()
 
             ///*** SIMPLE TACTIC ***///
             indx = target_list_length;
-            double d = dist(my_pos[0], my_pos[1], msg.event_x, msg.event_y);
+            // double d = dist(my_pos[0], my_pos[1], msg.event_x, msg.event_y);
             ///*** END SIMPLE TACTIC ***///
                 
 
             ///*** BETTER TACTIC ***///
             // Place your code here for I17 
-            /*
-		    indx = target_list_length;
+            //*indx = target_list_length;
+            
             double d = 0;
+            // printf("time: %f\n", get_task_time(robot_type, msg.event_type));
             if(target_list_length > 0){
-			    // TODO: put your strategy here
-               
-		    }else{
-			    // TODO: put your strategy here
-               
-		    }
-		    */
+              d = dist(target[indx - 1][0], target[indx - 1][1], msg.event_x, msg.event_y)/0.1 + get_task_time(robot_type, msg.event_type);
+            }else{
+              d = dist(my_pos[0], my_pos[1], msg.event_x, msg.event_y)/0.1 + get_task_time(robot_type, msg.event_type); 
+      	 }
+      	 
             ///*** END BETTER TACTIC ***///
                 
                 
@@ -245,6 +244,7 @@ static void receive_updates()
             ///*** END BEST TACTIC ***///
                 
             // Send my bid to the supervisor
+            printf("Robot %d %c bid %f on event %d %c\n", robot_id, strType(robot_type), d, msg.event_id, strType(msg.event_type));
             const bid_t my_bid = {robot_id, msg.event_id, d, indx};
             wb_emitter_set_channel(emitter_tag, robot_id+1);
             wb_emitter_send(emitter_tag, &my_bid, sizeof(bid_t));            

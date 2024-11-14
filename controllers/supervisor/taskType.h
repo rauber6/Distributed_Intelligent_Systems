@@ -19,6 +19,10 @@ const TaskType typeMap[] = {
     B  // 4
 };
 
+const double taskTime[2][2] = {
+    {3, 5}, {9, 1}
+};
+
 TaskType getType(int value) {
     if (value >= 0 && value < sizeof(typeMap) / sizeof(typeMap[0])) {
         return typeMap[value];
@@ -32,6 +36,13 @@ TaskType generate_random_task() {
       return A;
     else  
       return B;
+}
+
+double get_task_time(TaskType robot_type, TaskType event_type){
+
+    if(robot_type == UNKNOWN || event_type == UNKNOWN) return -1;
+    
+    return taskTime[int(robot_type)][int(event_type)];
 }
 
 double* getColor(TaskType t) {
