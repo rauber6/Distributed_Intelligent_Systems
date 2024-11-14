@@ -21,7 +21,7 @@
 #include <webots/supervisor.h> 
 
 #include "../supervisor/message.h" 
-#include "../supervisor/taskType.h"
+// #include "../supervisor/taskType.h"
 
 #define MAX_SPEED_WEB      6.28    // Maximum speed webots
 WbDeviceTag left_motor; //handler for left wheel of the robot
@@ -54,6 +54,7 @@ typedef enum {
     GO_TO_GOAL      = 2,                    // Initial state aliases
     OBSTACLE_AVOID  = 3,
     RANDOM_WALK     = 4,
+    PERFORMING_TASK = 5,
 } robot_state_t;
 
 #define DEFAULT_STATE (STAY)
@@ -483,6 +484,12 @@ void run(int ms)
             msl = 400;
             msr = 400;
             break;
+
+        case PERFORMING_TASK:
+            msl = 0;
+            msr = 0;
+            break;
+
 
         default:
             printf("Invalid state: robot_id %d \n", robot_id);

@@ -5,6 +5,8 @@
 //  Rev: -
 //******************************************************************************
 
+#include <stdexcept>
+
 #include <assert.h>
 #include <bitset>
 #include <cstdlib>
@@ -21,7 +23,7 @@ using namespace std;
 
 #include "Point2d.h"
 #include "message.h"
-#include "taskType.h"
+// #include "taskType.h"
 
 #include <webots/emitter.h>
 #include <webots/receiver.h>
@@ -245,6 +247,8 @@ private:
     const double *pos = getRobotPos(robot_id);
     const double *rot = wb_supervisor_field_get_sf_rotation(f_rot);
 
+    
+
     msg->robot_id = robot_id;
     msg->robot_x = pos[0]; // no gps noise used here
     msg->robot_y = pos[1]; // no gps noise used here
@@ -254,11 +258,13 @@ private:
     msg->event_id = -1;
     msg->event_x = 0.0;
     msg->event_y = 0.0;
+    
 
     if (event) {
       assert(event_state != MSG_EVENT_INVALID && 
              event_state != MSG_EVENT_GPS_ONLY);
       msg->event_id = event->id_;
+      msg->event_type = event->taskType;
       msg->event_x = event->pos_.x;
       msg->event_y = event->pos_.y;
       msg->event_index = event->bidder_index;

@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "taskType.h"
 
 // A message sent from the supervisor to the robot
 typedef enum {
@@ -18,6 +19,7 @@ typedef struct {
   message_event_state_t event_state;
   // [[ valid if event_state > 0: 
   uint16_t event_id;
+  TaskType event_type;
   double event_x;
   double event_y;
   // ]]
