@@ -7,6 +7,9 @@ typedef enum {
   MSG_EVENT_GPS_ONLY,
   MSG_EVENT_NEW,
   MSG_EVENT_WON,
+  MSG_EVENT_REACHED,
+  MSG_EVENT_NOT_IN_PROGRESS,
+  MSG_EVENT_IN_PROGRESS,
   MSG_EVENT_DONE,
   MSG_QUIT
 } message_event_state_t;
@@ -33,3 +36,9 @@ typedef struct {
   double value; // value of the bid (estimated distance)
   int event_index;
 } bid_t;
+
+typedef struct{
+  uint16_t robot_id;
+  uint16_t event_id;
+  message_event_state_t event_state;
+}message_event_status_t;

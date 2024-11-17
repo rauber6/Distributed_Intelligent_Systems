@@ -43,8 +43,8 @@ using namespace std;
 #define GPS_INTERVAL (500)
 
 // Parameters that can be changed
-#define NUM_ROBOTS 5                 // Change this also in the epuck_crown.c!
-#define NUM_EVENTS 10                // number of total tasks
+#define NUM_ROBOTS 5              // Change this also in the epuck_crown.c!
+#define NUM_EVENTS 10               // number of total tasks
 #define TOTAL_EVENTS_TO_HANDLE  50   // Events after which simulation stops or...
 #define MAX_RUNTIME (3*60*1000)      // ...total runtime after which simulation stops
 //
@@ -99,11 +99,14 @@ public:
   uint64_t t_done_;             //time at which the assigned robot reached the event
   int bidder_index;             //index at which the bidder will put event in tasklist
 
+  uint64_t reached_;
+  uint64_t in_progress_;
+
 // Public functions
 public:
   //Event creation
   Event(uint16_t id) : id_(id), pos_(rand_coord(), rand_coord()),
-    assigned_to_(-1), t_announced_(-1), best_bidder_(-1), best_bid_(0.0), t_done_(-1)
+    assigned_to_(-1), t_announced_(-1), best_bidder_(-1), best_bid_(0.0), t_done_(-1), reached_(0.0), in_progress_(0.0)
   {
     node_ = g_event_nodes_free.back();  // Place node
     g_event_nodes_free.pop_back();
@@ -148,6 +151,7 @@ public:
 
   bool is_assigned() const { return assigned_to_ != (uint16_t) -1; }
   bool was_announced() const { return t_announced_ != (uint64_t) -1; }
+  bool was_reached() const { return reached_ != (uint64_t) -1; }
   bool has_bids() const { return best_bidder_ != (uint16_t) -1; }
   bool is_done() const { return t_done_ != (uint64_t) -1; }
 
@@ -169,6 +173,7 @@ public:
     best_bidder_ = -1;
     best_bid_ = 0.0;
     t_done_ = -1;
+    reached_ = 0;
   }
 
   void markDone(uint64_t clk) {
@@ -305,6 +310,29 @@ private:
     }
   }
 
+    void markEventsReached(event_queue_t& event_queue) {
+    for (auto& event : events_) {
+      // printf("Event id: %d \n", event->id_);
+      if (!event->is_assigned() || event->is_done())
+        continue;
+      
+      const double *robot_pos = getRobotPos(event->assigned_to_);
+      Point2d robot_pos_pt(robot_pos[0], robot_pos[1]);
+      double dist = event->pos_.Distance(robot_pos_pt);
+
+      // printf("D robot %d distance %f to event %d is reached %d\n", event->assigned_to_, dist, event->id_, event->reached_);
+      if (dist <= EVENT_RANGE && !event->reached_ && event->in_progress_) {
+        printf("D robot %d reached event %d\n", event->assigned_to_,
+          event->id_);
+        // num_events_handled_++;
+        // event->markDone(clock_);
+        // num_active_events_--;
+        event->reached_ = 1;
+        event_queue.emplace_back(event.get(), MSG_EVENT_REACHED);
+      }
+    }
+  }
+
   void handleAuctionEvents(event_queue_t& event_queue) {
     // For each unassigned event
     for (auto& event : events_) {
@@ -404,7 +432,8 @@ public:
     // Events that will be announced next or that have just been assigned/done
     event_queue_t event_queue;
 
-    markEventsDone(event_queue);
+    markEventsReached(event_queue);
+    // markEventsDone(event_queue);
 
     // ** Add a random new event, if the time has come
     assert(t_next_event_ > 0);
@@ -416,22 +445,41 @@ public:
  
     // Send and receive messages
     bid_t* pbid; // inbound
+    message_event_status_t* pmsg;
     for (int i=0;i<NUM_ROBOTS;i++) {
       // Check if we're receiving data
       if (wb_receiver_get_queue_length(receivers_[i]) > 0) {
         assert(wb_receiver_get_queue_length(receivers_[i]) > 0);
-        assert(wb_receiver_get_data_size(receivers_[i]) == sizeof(bid_t));
         
-        pbid = (bid_t*) wb_receiver_get_data(receivers_[i]); 
-        assert(pbid->robot_id == i);
+        if(wb_receiver_get_data_size(receivers_[i]) == sizeof(bid_t)){
+          pbid = (bid_t*) wb_receiver_get_data(receivers_[i]); 
+          assert(pbid->robot_id == i);
 
-        Event* event = events_.at(pbid->event_id).get();
-        event->updateAuction(pbid->robot_id, pbid->value, pbid->event_index);
-        // TODO: Refactor this (same code above in handleAuctionEvents)
-        if (event->is_assigned()) {
-          event_queue.emplace_back(event, MSG_EVENT_WON);
-          auction = NULL;
-          printf("W robot %d won event %d\n", event->assigned_to_, event->id_);
+          Event* event = events_.at(pbid->event_id).get();
+          event->updateAuction(pbid->robot_id, pbid->value, pbid->event_index);
+          // TODO: Refactor this (same code above in handleAuctionEvents)
+          if (event->is_assigned()) {
+            event_queue.emplace_back(event, MSG_EVENT_WON);
+            auction = NULL;
+            printf("W robot %d won event %d\n", event->assigned_to_, event->id_);
+          }
+        }
+        else if(wb_receiver_get_data_size(receivers_[i]) == sizeof(message_event_status_t)){
+          pmsg = (message_event_status_t*) wb_receiver_get_data(receivers_[i]); 
+          assert(pmsg->robot_id == i);
+          Event* event = events_.at(pmsg->event_id).get();
+          message_event_state_t state = pmsg->event_state;
+          if(state == MSG_EVENT_DONE){
+            num_events_handled_++;
+            event->markDone(clock_);
+            num_active_events_--;
+            event_queue.emplace_back(event, MSG_EVENT_DONE);
+            printf("C robot %d completed event %d\n", event->assigned_to_, event->id_);
+          }
+          else if (state == MSG_EVENT_IN_PROGRESS){
+            // event->reached_ = 0;
+            event->in_progress_ = 1;
+          }
         }
 
         wb_receiver_next_packet(receivers_[i]);
