@@ -296,27 +296,36 @@ static void receive_updates()
             // Place your code here for I17 
             //*indx = target_list_length;
             
-            double d = 0;
-            // printf("time: %f\n", get_task_time(robot_type, msg.event_type));
-            if(target_list_length > 0){
-              d = dist(target[indx - 1][0], target[indx - 1][1], msg.event_x, msg.event_y)/0.1 + get_task_time(robot_type, msg.event_type);
-            }else{
-              d = dist(my_pos[0], my_pos[1], msg.event_x, msg.event_y)/0.1 + get_task_time(robot_type, msg.event_type); 
-      	 }
+        //     double d = 0;
+        //     // printf("time: %f\n", get_task_time(robot_type, msg.event_type));
+        //     if(target_list_length > 0){
+        //       d = dist(target[indx - 1][0], target[indx - 1][1], msg.event_x, msg.event_y)/0.1 + get_task_time(robot_type, msg.event_type);
+        //     }else{
+        //       d = dist(my_pos[0], my_pos[1], msg.event_x, msg.event_y)/0.1 + get_task_time(robot_type, msg.event_type); 
+      	//  }
       	 
             ///*** END BETTER TACTIC ***///
                 
                 
             ///*** BEST TACTIC ***/// 
-		    // Place your code here for I20
-            //indx = 0;
-            //double d = dist(my_pos[0], my_pos[1], msg.event_x, msg.event_z);             
-            //if(target_list_length > 0)
-            //{  
+	        indx = 0;
+            double inserted_d = dist(my_pos[0], my_pos[1], msg.event_x, msg.event_y)+ dist(target[0][0], target[0][1], msg.event_x, msg.event_y);
+            double prev_d = dist(target[0][0], target[0][1], my_pos[0], my_pos[1]);           
+            double d = inserted_d - prev_d;
+            if(target_list_length > 0)
+            {  
                 // for all the tasks inside the task list (i.e. target[i] where i goes up to target_list_length)  check if putting the current 
                 // event (located at (msg.event_x, msg.event_z)) in between two task results in  a smaller distance, and modify the d accordingly.
-            //}
-
+              for(int i = 1; i < target_list_length; i++){
+                inserted_d = dist(target[i - 1][0], target[i - 1][1], msg.event_x, msg.event_y) + dist(target[i][0], target[i][1], msg.event_x, msg.event_y);
+                prev_d = dist(target[i - 1][0], target[i - 1][1], target[i][0], target[i][1]);
+                if( inserted_d - prev_d < d) {
+                  d = inserted_d - prev_d;
+                  indx = i;
+                }
+              }
+            }
+            d = d*get_task_time(robot_type, msg.event_type);
             ///*** END BEST TACTIC ***///
                 
             // Send my bid to the supervisor
