@@ -112,30 +112,6 @@ double dist(double x0, double y0, double x1, double y1) {
     return sqrt((x0-x1)*(x0-x1) + (y0-y1)*(y0-y1));
 }
 
-void markAsDone(int event_id){
-    //find target list length
-    int i = 0, target_list_length = 0;
-    while(target[i][2] != INVALID){ i++;}
-    target_list_length = i;  
-        
-    // If event is done, delete it from array 
-    for(i=0; i<=target_list_length; i++)
-    {
-        if((int)target[i][2] == event_id) 
-        { //look for correct id (in case wrong event was done first)
-            for(; i<=target_list_length; i++)
-            { //push list to the left from event index
-                target[i][0] = target[i+1][0];
-                target[i][1] = target[i+1][1];
-                target[i][2] = target[i+1][2];
-                target[i][3] = target[i+1][3];
-            }
-        }
-        }
-    // adjust target list length
-    if(target_list_length-1 == 0) target_valid = 0; //used in general state machine 
-    target_list_length = target_list_length-1;  
-}
 // Check if we received a message and extract information
 static void receive_updates() 
 {
@@ -186,7 +162,6 @@ static void receive_updates()
         }
         else if(msg.event_state == MSG_EVENT_REACHED && !task_in_progress)
         {
-            printf("Robot %d reached task %d, first target %d\n", robot_id, msg.event_id, int(target[0][2]));
     
             if((int)target[0][2] != msg.event_id)
             {
@@ -199,42 +174,16 @@ static void receive_updates()
                 clock_task = clock;
             }
 
-
-
-            // double temp[4];
-            // if(int(target[0][2]) != msg.event_id){
-            //     temp[0] = target[0][0];
-            //     temp[1] = target[0][1];
-            //     temp[2] = target[0][2];
-            //     temp[3] = target[0][3];
-
-            //     for(i=0; i<target_list_length; i++)
-            //     {
-            //         if((int)target[i][2] == msg.event_id) 
-            //         { //look for correct id (in case wrong event was done first)
-            //          target[0][0] = target[i][0];
-            //          target[0][1] = target[i][1];
-            //          target[0][2] = target[i][2];
-            //          target[0][3] = target[i][3];     
-
-            //          target[i][0] = temp[0];
-            //          target[i][1] = temp[1];
-            //          target[i][2] = temp[2];
-            //          target[i][3] = temp[3];       
-            //         }
-            //     }
-            // }
-            printf("Robot %d reached task %d, first target %d\n", robot_id, msg.event_id, int(target[0][2]));
-
         }
         else if(msg.event_state == MSG_EVENT_DONE)
          {
              // If event is done, delete it from array 
-             for(i=0; i<=target_list_length; i++)
+             for(i=0; i< target_list_length; i++)
              {
                  if((int)target[i][2] == msg.event_id) 
-                 { //look for correct id (in case wrong event was done first)
-                     for(; i<=target_list_length; i++)
+                 { 
+                    //look for correct id (in case wrong event was done first)
+                     for(; i < target_list_length; i++)
                      { //push list to the left from event index
                          target[i][0] = target[i+1][0];
                          target[i][1] = target[i+1][1];
@@ -248,24 +197,30 @@ static void receive_updates()
              target_list_length = target_list_length-1;    
          }
         else if(msg.event_state == MSG_EVENT_WON)
-        {
+           {
+            // printf("Robot %d insert task %d at id %d\n", robot_id, msg.event_id, msg.event_index);
             // insert event at index
-            // for(i=target_list_length; i>=msg.event_index; i--)
-            // {
-            //     target[i+1][0] = target[i][0];
-            //     target[i+1][1] = target[i][1];
-            //     target[i+1][2] = target[i][2];
-            //     target[i+1][3] = target[i][3];
-            // }
-            // target[msg.event_index][0] = msg.event_x;
-            // target[msg.event_index][1] = msg.event_y;
-            // target[msg.event_index][2] = msg.event_id;
-            // target[msg.event_index][3] = int(msg.event_type);
-            target[target_list_length][0] = msg.event_x;
-            target[target_list_length][1] = msg.event_y;
-            target[target_list_length][2] = msg.event_id;
-            target[target_list_length][3] = int(msg.event_type);
+            if(msg.event_index <= target_list_length){
+                for(i=target_list_length; i>=msg.event_index; i--)
+                {
+                    target[i+1][0] = target[i][0];
+                    target[i+1][1] = target[i][1];
+                    target[i+1][2] = target[i][2];
+                    target[i+1][3] = target[i][3];
+                }
+                target[msg.event_index][0] = msg.event_x;
+                target[msg.event_index][1] = msg.event_y;
+                target[msg.event_index][2] = msg.event_id;
+                target[msg.event_index][3] = int(msg.event_type);
+            }
+            else{
+                target[target_list_length][0] = msg.event_x;
+                target[target_list_length][1] = msg.event_y;
+                target[target_list_length][2] = msg.event_id;
+                target[target_list_length][3] = int(msg.event_type);
+            }
             target_valid = 1; //used in general state machine
+            // printf("    New task length %d\n.", target_list_length + 1);
             target_list_length = target_list_length+1;
         }
         // check if new event is being auctioned
@@ -296,13 +251,13 @@ static void receive_updates()
             // Place your code here for I17 
             //*indx = target_list_length;
             
-        //     double d = 0;
-        //     // printf("time: %f\n", get_task_time(robot_type, msg.event_type));
-        //     if(target_list_length > 0){
-        //       d = dist(target[indx - 1][0], target[indx - 1][1], msg.event_x, msg.event_y)/0.1 + get_task_time(robot_type, msg.event_type);
-        //     }else{
-        //       d = dist(my_pos[0], my_pos[1], msg.event_x, msg.event_y)/0.1 + get_task_time(robot_type, msg.event_type); 
-      	//  }
+            // double d = 0;
+            // // printf("time: %f\n", get_task_time(robot_type, msg.event_type));
+            // if(target_list_length > 0){
+            //   d = dist(target[indx - 1][0], target[indx - 1][1], msg.event_x, msg.event_y)/0.1 + get_task_time(robot_type, msg.event_type);
+            // }else{
+            //   d = dist(my_pos[0], my_pos[1], msg.event_x, msg.event_y)/0.1 + get_task_time(robot_type, msg.event_type); 
+      	    // }
       	 
             ///*** END BETTER TACTIC ***///
                 
@@ -314,6 +269,7 @@ static void receive_updates()
             double d = inserted_d - prev_d;
             if(target_list_length > 0)
             {  
+                indx = 1;
                 // for all the tasks inside the task list (i.e. target[i] where i goes up to target_list_length)  check if putting the current 
                 // event (located at (msg.event_x, msg.event_z)) in between two task results in  a smaller distance, and modify the d accordingly.
               for(int i = 1; i < target_list_length; i++){
@@ -440,7 +396,6 @@ void update_state(int _sum_distances)
     if (_sum_distances > STATECHANGE_DIST && state == GO_TO_GOAL)
     {
         state = OBSTACLE_AVOID;
-        // printf("Robot %d obstacle avoid _sum_distances: %d\n", robot_id, _sum_distances);
     }
     else if(target_valid && task_in_progress && state != PERFORMING_TASK)
     {
@@ -457,14 +412,10 @@ void update_state(int _sum_distances)
     else if(state == PERFORMING_TASK && (clock - clock_task) >= (get_task_time(robot_type, TaskType(target[0][3]))*1000)){
         state = OBSTACLE_AVOID;
         task_in_progress = 0;
-        // printf("Time to finish task: %f \n", (get_task_time(robot_type, TaskType(target[0][3]))*1000));
-        // printf("Robot %d completed task %c\n after %d time \n", robot_id, strType(TaskType(target[0][3])), (clock - clock_task));
 
-        const message_event_status_t my_task = {robot_id, uint16_t(int(target[0][2])), MSG_EVENT_DONE};
+        const message_event_status_t my_task = {robot_id, uint16_t(target[0][2]), MSG_EVENT_DONE};
         wb_emitter_set_channel(emitter_tag, robot_id+1);
         wb_emitter_send(emitter_tag, &my_task, sizeof(message_event_status_t));  
-
-        // markAsDone(target[0][2]);
     }
 }
 
@@ -569,14 +520,12 @@ void run(int ms)
     // State may change because of obstacles
     update_state(sum_distances);
     
-    if(target_valid){
-        
+    if(target_valid)
+    {
         const message_event_status_t my_task = {robot_id, uint16_t(target[0][2]), MSG_EVENT_IN_PROGRESS};
         wb_emitter_set_channel(emitter_tag, robot_id+1);
         wb_emitter_send(emitter_tag, &my_task, sizeof(message_event_status_t)); 
     }
-
-    // printf("Robot %d state %d valid target %d sum distances %d\n", robot_id, int(state), target_valid, sum_distances);
     // printf("State: %c\n", strType(state));
     // Set wheel speeds depending on state
     switch (state) {

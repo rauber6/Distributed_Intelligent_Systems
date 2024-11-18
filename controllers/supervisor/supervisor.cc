@@ -174,6 +174,7 @@ public:
     best_bid_ = 0.0;
     t_done_ = -1;
     reached_ = 0;
+    in_progress_ = 0;
   }
 
   void markDone(uint64_t clk) {
@@ -312,7 +313,6 @@ private:
 
     void markEventsReached(event_queue_t& event_queue) {
     for (auto& event : events_) {
-      // printf("Event id: %d \n", event->id_);
       if (!event->is_assigned() || event->is_done())
         continue;
       
@@ -320,13 +320,9 @@ private:
       Point2d robot_pos_pt(robot_pos[0], robot_pos[1]);
       double dist = event->pos_.Distance(robot_pos_pt);
 
-      // printf("D robot %d distance %f to event %d is reached %d\n", event->assigned_to_, dist, event->id_, event->reached_);
-      if (dist <= EVENT_RANGE && !event->reached_ && event->in_progress_) {
+      if (dist <= EVENT_RANGE && !event->reached_  && event->in_progress_) { // 
         printf("D robot %d reached event %d\n", event->assigned_to_,
           event->id_);
-        // num_events_handled_++;
-        // event->markDone(clock_);
-        // num_active_events_--;
         event->reached_ = 1;
         event_queue.emplace_back(event.get(), MSG_EVENT_REACHED);
       }
@@ -468,6 +464,7 @@ public:
           pmsg = (message_event_status_t*) wb_receiver_get_data(receivers_[i]); 
           assert(pmsg->robot_id == i);
           Event* event = events_.at(pmsg->event_id).get();
+          assert(event->in_progress_);
           message_event_state_t state = pmsg->event_state;
           if(state == MSG_EVENT_DONE){
             num_events_handled_++;
@@ -476,8 +473,11 @@ public:
             event_queue.emplace_back(event, MSG_EVENT_DONE);
             printf("C robot %d completed event %d\n", event->assigned_to_, event->id_);
           }
+          else if (state == MSG_EVENT_NOT_IN_PROGRESS){
+            event->reached_ = 0;
+            event->in_progress_ = 0;
+          }
           else if (state == MSG_EVENT_IN_PROGRESS){
-            // event->reached_ = 0;
             event->in_progress_ = 1;
           }
         }
