@@ -267,6 +267,8 @@ static void receive_updates()
             double inserted_d = dist(my_pos[0], my_pos[1], msg.event_x, msg.event_y)+ dist(target[0][0], target[0][1], msg.event_x, msg.event_y);
             double prev_d = dist(target[0][0], target[0][1], my_pos[0], my_pos[1]);           
             double d = inserted_d - prev_d;
+            double time_to[target_list_length] = {0};
+            double distance_to[target_list_length] = {0};
             if(target_list_length > 0)
             {  
                 indx = 1;
@@ -279,9 +281,13 @@ static void receive_updates()
                   d = inserted_d - prev_d;
                   indx = i;
                 }
+                time_to[i] = time_to[i-1] + get_task_time(robot_type, TaskType(target[i][3]));
+                distance_to[i] = prev_d;
               }
             }
-            d = d*get_task_time(robot_type, msg.event_type);
+            d = (distance_to[indx] + d)/0.1 + get_task_time(robot_type, msg.event_type) + time_to[indx];
+            // d = (d)/0.1 + get_task_time(robot_type, msg.event_type);
+
             ///*** END BEST TACTIC ***///
                 
             // Send my bid to the supervisor
