@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "taskType.h"
+#include "taskType.hpp"
 
 // A message sent from the supervisor to the robot
 typedef enum {

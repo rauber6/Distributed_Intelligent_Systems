@@ -40,6 +40,7 @@
 ### ---- C++ Sources ----
 ### if your program uses several C++ source files:
 ### CXX_SOURCES = my_plugin.cc my_clever_algo.cpp my_graphics.c++
+CXX_SOURCES = e-puck.cc e-puck-lib.cc ../supervisor/taskType.cc
 ###
 ### ---- Compilation options ----
 ### if special compilation flags are necessary:
@@ -49,6 +50,7 @@
 ### if your program needs additional libraries:
 ### INCLUDE = -I"/my_library_path/include"
 ### LIBRARIES = -L"/path/to/my/library" -lmy_library -lmy_other_library
+INCLUDE = -I"/controllers/e-puck/include/e-puck-lib.hpp"
 ###
 ### ---- Linking options ----
 ### if special linking flags are needed:

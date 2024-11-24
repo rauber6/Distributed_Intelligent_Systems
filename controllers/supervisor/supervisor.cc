@@ -21,8 +21,8 @@
 
 using namespace std;
 
-#include "Point2d.h"
-#include "message.h"
+#include "include/Point2d.h"
+#include "include/message.h"
 // #include "taskType.h"
 
 #include <webots/emitter.h>
@@ -438,7 +438,7 @@ public:
     }
 
     handleAuctionEvents(event_queue);
- 
+    
     // Send and receive messages
     bid_t* pbid; // inbound
     message_event_status_t* pmsg;
@@ -447,7 +447,7 @@ public:
       if (wb_receiver_get_queue_length(receivers_[i]) > 0) {
         assert(wb_receiver_get_queue_length(receivers_[i]) > 0);
         
-        if(wb_receiver_get_data_size(receivers_[i]) == sizeof(bid_t)){
+        if(wb_receiver_get_data_size(receivers_[i]) == sizeof(bid_t)){ 
           pbid = (bid_t*) wb_receiver_get_data(receivers_[i]); 
           assert(pbid->robot_id == i);
 
@@ -463,8 +463,14 @@ public:
         else if(wb_receiver_get_data_size(receivers_[i]) == sizeof(message_event_status_t)){
           pmsg = (message_event_status_t*) wb_receiver_get_data(receivers_[i]); 
           assert(pmsg->robot_id == i);
+          // std::cout << "VAL " << pmsg->event_id << std::endl;
+          // std::cout << "VAL " << i << std::endl;
+          // std::cout << "VAL " << events_.at(pmsg->event_id).get()->id_ << std::endl;
           Event* event = events_.at(pmsg->event_id).get();
+          // std::cout << "val" << event->id_ << std::endl;
+          // std::cout << "2" << std::endl;
           assert(event->in_progress_);
+          // return 1;
           message_event_state_t state = pmsg->event_state;
           if(state == MSG_EVENT_DONE){
             num_events_handled_++;
@@ -563,12 +569,12 @@ void link_event_nodes() {
 int main(void) 
 {
   Supervisor supervisor;
-
+  
   // initialization
   wb_robot_init();
   link_event_nodes();
   wb_robot_step(STEP_SIZE);
-
+  
   srand(time(NULL));
   supervisor.reset();
 
