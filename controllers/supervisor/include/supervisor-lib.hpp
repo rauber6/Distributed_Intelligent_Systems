@@ -165,14 +165,13 @@ public:
 class Supervisor {
 
 //Private variables
-private:
+protected:
   uint64_t clock_;
 
   uint16_t next_event_id_;
   vector<unique_ptr<Event> > events_;
   uint16_t num_active_events_;
   uint64_t t_next_event_;
-  Event* auction; // the event currently being auctioned
   uint64_t t_next_gps_tick_;
 
   uint16_t num_events_handled_; // total number of events handled
@@ -191,15 +190,13 @@ private:
       message_event_state_t event_state, message_t* msg);
   const double* getRobotPos(uint16_t robot_id);
   void setRobotPos(uint16_t robot_id, double x, double y);
-  void markEventsDone(event_queue_t& event_queue);
-  void markEventsReached(event_queue_t& event_queue);
-  void handleAuctionEvents(event_queue_t& event_queue);
+
   void statTotalDistance();
 
 public:
   Supervisor() : events_(NUM_EVENTS){};
   void reset();
-  bool step(uint64_t step_size);
+  virtual bool step(uint64_t step_size) {};
 
 };
 

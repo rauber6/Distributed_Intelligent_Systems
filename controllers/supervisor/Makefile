@@ -39,7 +39,7 @@
 ###
 ### ---- C++ Sources ----
 ### if your program uses several C++ source files:
-CXX_SOURCES = supervisor.cc taskType.cc supervisor-lib.cc
+CXX_SOURCES = supervisor.cc taskType.cc supervisor-lib.cc supervisor-center-lib.cc
 ###
 ### ---- Compilation options ----
 ### if special compilation flags are necessary:
