@@ -363,6 +363,8 @@ bool Supervisor::step(uint64_t step_size) {
     else { return true;} //continue
   } // << step() <<
 
+//Links up all the nodes we are interested in.
+//Gets called by webots at robot_live(reset)
 void link_event_nodes() {
   const char kEventNameFormat[] = "e%d";
   char node_name[16];

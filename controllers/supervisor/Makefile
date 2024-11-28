@@ -48,7 +48,7 @@ CFLAGS = -w  # compile without warnings
 ###
 ### ---- Linked libraries ----
 ### if your program needs additional libraries:
-INCLUDE = -I"/controllers/supervisor/include/supervisor-lib.hpp" -I"/controllers/supervisor/include/taskType.hpp"
+INCLUDE = -I"/controllers/supervisor/include/supervisor-lib.hpp" -I"/controllers/supervisor/include/supervisor-center-lib.hpp" -I"/controllers/supervisor/include/taskType.hpp"
 ### LIBRARIES = -L"/path/to/my/library" -lmy_library -lmy_other_library
 ###
 ### ---- Linking options ----
