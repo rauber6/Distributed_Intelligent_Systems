@@ -39,7 +39,7 @@
 ###
 ### ---- C++ Sources ----
 ### if your program uses several C++ source files:
-CXX_SOURCES = supervisor.cc taskType.cc
+CXX_SOURCES = supervisor.cc taskType.cc supervisor-lib.cc
 ###
 ### ---- Compilation options ----
 ### if special compilation flags are necessary:
@@ -48,7 +48,7 @@ CFLAGS = -w  # compile without warnings
 ###
 ### ---- Linked libraries ----
 ### if your program needs additional libraries:
-INCLUDE = -I"/controllers/supervisor/include/taskType.hpp"
+INCLUDE = -I"/controllers/supervisor/include/supervisor-lib.hpp" -I"/controllers/supervisor/include/taskType.hpp"
 ### LIBRARIES = -L"/path/to/my/library" -lmy_library -lmy_other_library
 ###
 ### ---- Linking options ----
