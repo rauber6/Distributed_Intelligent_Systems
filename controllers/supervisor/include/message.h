@@ -15,7 +15,7 @@ typedef enum {
 } message_event_state_t;
 
 typedef struct {
-  uint16_t robot_id; // id of the intended receiver
+  int16_t robot_id; // id of the intended receiver
   double robot_x;
   double robot_y;
   double heading; // robot heading

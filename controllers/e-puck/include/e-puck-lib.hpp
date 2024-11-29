@@ -14,6 +14,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <string.h>
+#include <iostream>
 
 #include <webots/robot.h>
 #include <webots/emitter.h>
@@ -43,6 +44,9 @@
 #define BREAK -999 // for physics plugin
 
 #define NUM_ROBOTS 5 // Change this also in the supervisor!
+#define NUM_TASKS 10
+
+#define WB_CHANNEL_BROADCAST -1
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /* Collective decision parameters */
@@ -76,7 +80,7 @@ class Epuck
 public:
     Epuck();
 
-    void reset();
+    virtual void reset();
     void update_state(int _sum_distances);
     void update_self_motion(int msl, int msr);
     void compute_avoid_obstacle(int *msl, int *msr, int distances[]);
@@ -85,6 +89,7 @@ public:
     void receive_updates();
     
     // Abstract methods
+    // FIXME make this protected
     virtual void msgEventDone(message_t msg) = 0;
     virtual void msgEventWon(message_t msg) = 0;
     virtual void msgEventNew(message_t msg) = 0;
@@ -138,6 +143,23 @@ class EpuckCentralized : public Epuck{
 class EpuckDistributed : public Epuck{
     public:
         EpuckDistributed();
+        void reset();
+
+    private:
+        int8_t x[NUM_TASKS];  // tracks tasks (-1 not announced, 0 not assigned, 1 assigned)
+        float y[NUM_TASKS];   // tracks local knowledge of the market (best bid on the market for each task)
+        float h[NUM_TASKS];   // track personal valid tasks and thier corresponding bid (if =0 task not valid, otherwise this is bid)
+        task_t t[NUM_TASKS];  // keep info about all tasks
+
+        // void reset();
+
+        void msgEventDone(message_t msg) override;
+        void msgEventWon(message_t msg) override;
+        void msgEventNew(message_t msg) override;
+        void msgEventCustom(message_t msg) override;
+        void update_state_custom() override;
+        void run_custom_pre_update() override;
+        void run_custom_post_update() override;
 };
 
 

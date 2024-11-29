@@ -29,6 +29,7 @@ double expovariate(double mu) {
 }
 
 void Supervisor::addEvent() {
+    // printf("Parent event\n");
     events_.push_back(unique_ptr<Event>(new Event(next_event_id_++))); // add to list
     assert(num_active_events_ < NUM_EVENTS); // check max. active events not reached
     num_active_events_++;
@@ -62,7 +63,7 @@ void Supervisor::linkRobot(uint16_t id) {
   }
 
   // Assemble a new message to be sent to robots
-void Supervisor::buildMessage(uint16_t robot_id, const Event* event,
+void Supervisor::buildMessage(int16_t robot_id, const Event* event,
       message_event_state_t event_state, message_t* msg) {
     WbFieldRef f_rot = wb_supervisor_node_get_field(robots_[robot_id],
                                                     "rotation");
@@ -120,6 +121,7 @@ void Supervisor::statTotalDistance() {
 
   // Reset robots & events
 void Supervisor::reset() {
+    // printf("supervisor reset in parent\n");
     clock_ = 0;
 
     // initialize & link events

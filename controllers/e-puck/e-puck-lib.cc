@@ -18,6 +18,7 @@ Epuck::Epuck() {
 
 void Epuck::reset()
 {
+    // printf("Epuck reset parent\n");
     wb_robot_init();
     int i;
 
@@ -273,7 +274,7 @@ void Epuck::receive_updates()
         // double check this message is for me
         // communication should be on specific channel per robot
         // channel = robot_id + 1, channel 0 reserved for physics plguin
-        if(msg.robot_id != robot_id) {
+        if((msg.robot_id != (int16_t)robot_id) && (msg.robot_id != -1)) {
             fprintf(stderr, "Invalid message: robot_id %d "  "doesn't match receiver %d\n", msg.robot_id, robot_id);
             //return;
             exit(1);

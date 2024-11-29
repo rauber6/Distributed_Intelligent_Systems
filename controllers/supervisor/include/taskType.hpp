@@ -1,6 +1,8 @@
 #ifndef __TASK_TYPE_HPP__
 #define __TASK_TYPE_HPP__
 
+#include <cstdlib>
+
 #define TASK_A_PROB 0.33
 // #define TASK_B_PROB 0.66
 
@@ -13,6 +15,12 @@ typedef enum {
     B,
     UNKNOWN
 } TaskType;
+
+typedef struct{
+    uint8_t id;
+    float posX;
+    float posY;
+} task_t;
 
 extern const TaskType typeMap[];
 extern const double taskTime[2][2];
