@@ -75,7 +75,6 @@ class Epuck
 {
 public:
     Epuck();
-    // ~Epuck();
 
     void reset();
     void update_state(int _sum_distances);
@@ -84,8 +83,16 @@ public:
     void compute_go_to_goal(int *msl, int *msr);
     void run(int ms);
     void receive_updates();
+    
+    // Abstract methods
+    virtual void msgEventDone(message_t msg) = 0;
+    virtual void msgEventWon(message_t msg) = 0;
+    virtual void msgEventNew(message_t msg) = 0;
+    virtual void msgEventCustom(message_t msg) = 0;  // to handle custom messages in sub-classes
+    virtual void update_state_custom() = 0;  // to handle custom states in sub-classes
+    virtual void run_custom() = 0;  // to handle custom run instructions in sub-classes
 
-private:
+protected:
     int clock;
     int clock_task;
     char task_in_progress;
@@ -97,6 +104,7 @@ private:
     double target[99][4]; // x and z coordinates of target position (max 99 targets)
     // int lmsg, rmsg;       // Communication variables
     int indx;             // Event index to be sent to the supervisor
+    int target_list_length;
 
     // Proximity and radio handles
     WbDeviceTag emitter_tag, receiver_tag;
@@ -110,6 +118,26 @@ private:
     WbDeviceTag right_motor; // handler for the right wheel of the robot
 
 };
+
+class EpuckCentralized : public Epuck{
+    public:
+        EpuckCentralized();
+
+    private:
+        void msgEventDone(message_t msg) override;
+        void msgEventWon(message_t msg) override;
+        void msgEventNew(message_t msg) override;
+        void msgEventCustom(message_t msg) override;
+        void update_state_custom() override;
+        void run_custom() override;
+
+};
+
+class EpuckDistributed : public Epuck{
+    public:
+        EpuckDistributed();
+};
+
 
 double rnd(void);
 
