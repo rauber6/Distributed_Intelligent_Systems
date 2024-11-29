@@ -208,12 +208,14 @@ void Epuck::run(int ms)
     // Get info from supervisor
     receive_updates();
 
+    run_custom_pre_update();
+
     // State may change because of obstacles
     update_state(sum_distances);
 
     // Custom instruction
-    run_custom();
-    
+    run_custom_post_update();
+
     // Set wheel speeds depending on state
     switch (state) {
         case STAY:

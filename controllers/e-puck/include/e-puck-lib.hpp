@@ -90,7 +90,8 @@ public:
     virtual void msgEventNew(message_t msg) = 0;
     virtual void msgEventCustom(message_t msg) = 0;  // to handle custom messages in sub-classes
     virtual void update_state_custom() = 0;  // to handle custom states in sub-classes
-    virtual void run_custom() = 0;  // to handle custom run instructions in sub-classes
+    virtual void run_custom_pre_update() = 0;  // to handle custom run instructions in sub-classes
+    virtual void run_custom_post_update() = 0;  // to handle custom run instructions in sub-classes
 
 protected:
     int clock;
@@ -129,7 +130,8 @@ class EpuckCentralized : public Epuck{
         void msgEventNew(message_t msg) override;
         void msgEventCustom(message_t msg) override;
         void update_state_custom() override;
-        void run_custom() override;
+        void run_custom_pre_update() override;
+        void run_custom_post_update() override;
 
 };
 

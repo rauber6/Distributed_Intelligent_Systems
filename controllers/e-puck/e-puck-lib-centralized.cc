@@ -146,7 +146,11 @@ void EpuckCentralized::update_state_custom(){
 
 }
 
-void EpuckCentralized::run_custom(){
+void EpuckCentralized::run_custom_pre_update(){
+
+}
+
+void EpuckCentralized::run_custom_post_update(){
     if(target_valid)
     {
         const message_event_status_t my_task = {robot_id, uint16_t(target[0][2]), MSG_EVENT_IN_PROGRESS};
