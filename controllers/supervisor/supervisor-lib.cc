@@ -65,20 +65,23 @@ void Supervisor::linkRobot(uint16_t id) {
   // Assemble a new message to be sent to robots
 void Supervisor::buildMessage(int16_t robot_id, const Event* event,
       message_event_state_t event_state, message_t* msg) {
-    WbFieldRef f_rot = wb_supervisor_node_get_field(robots_[robot_id],
-                                                    "rotation");
-    const double *pos = getRobotPos(robot_id);
-    const double *rot = wb_supervisor_field_get_sf_rotation(f_rot);
+        msg->robot_id = robot_id;
+        msg->sender_id = SUPERVISOR_SENDER_ID;  // for supervisor
+        if(robot_id >= 0){
+          WbFieldRef f_rot = wb_supervisor_node_get_field(robots_[robot_id],
+                                                          "rotation");
+          const double *pos = getRobotPos(robot_id);
+          const double *rot = wb_supervisor_field_get_sf_rotation(f_rot);
 
-    msg->robot_id = robot_id;
-    msg->robot_x = pos[0]; // no gps noise used here
-    msg->robot_y = pos[1]; // no gps noise used here
-    double heading = -rot[2] *rot[3]; // no gps noise used here
-    msg->heading = heading > 2*M_PI ? heading - 2*M_PI : heading;
-    msg->event_state = event_state;
-    msg->event_id = -1;
-    msg->event_x = 0.0;
-    msg->event_y = 0.0;
+          msg->robot_x = pos[0]; // no gps noise used here
+          msg->robot_y = pos[1]; // no gps noise used here
+          double heading = -rot[2] *rot[3]; // no gps noise used here
+          msg->heading = heading > 2*M_PI ? heading - 2*M_PI : heading;
+        }
+        msg->event_state = event_state;
+        msg->event_id = -1;
+        msg->event_x = 0.0;
+        msg->event_y = 0.0;
     
 
     if (event) {

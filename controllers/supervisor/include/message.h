@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include "taskType.hpp"
 
+#define NUM_TASKS 10
+
 // A message sent from the supervisor to the robot
 typedef enum {
   MSG_EVENT_INVALID = 0, 
@@ -11,7 +13,8 @@ typedef enum {
   MSG_EVENT_NOT_IN_PROGRESS,
   MSG_EVENT_IN_PROGRESS,
   MSG_EVENT_DONE,
-  MSG_QUIT
+  MSG_QUIT,
+  MSG_DISTRIBUTED_MARKET
 } message_event_state_t;
 
 typedef struct {
@@ -27,6 +30,9 @@ typedef struct {
   double event_y;
   // ]]
   int event_index;
+  int16_t sender_id;
+  float market_bids[NUM_TASKS];
+  int16_t market_winners[NUM_TASKS];
 } message_t;
 
 // A message sent from a robot to the supervisor

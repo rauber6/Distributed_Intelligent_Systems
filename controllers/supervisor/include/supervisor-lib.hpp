@@ -32,7 +32,7 @@ using namespace std;
 #define DBG(x) printf x
 #define RAND ((float) rand()/RAND_MAX)
 
-#define STEP_SIZE 64            // simulation step size
+#define STEP_SIZE 2000 //FIXME restore 64            // simulation step size
 #define AUCTION_TIMEOUT 1000    // number of steps after which an auction stops
 
 #define EVENT_RANGE (0.1)      // distance within which a robot must come to do event
@@ -49,6 +49,7 @@ using namespace std;
 //
 
 #define WB_CHANNEL_BROADCAST -1
+#define SUPERVISOR_SENDER_ID 999
 
 
 extern WbNodeRef g_event_nodes[NUM_EVENTS];
@@ -222,5 +223,7 @@ class SupervisorDistributed : public Supervisor {
     void addEvent() override;
     void addEvent(int8_t index);
     void buildMessage(int16_t robot_id, const Event* event, message_event_state_t event_state, message_t* msg);
+
+    void markEventsReached(event_queue_t& event_queue);
 
 };

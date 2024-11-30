@@ -271,6 +271,8 @@ void Epuck::receive_updates()
         memcpy(&msg, pmsg, sizeof(message_t));
         wb_receiver_next_packet(receiver_tag);
 
+        if(msg.sender_id == robot_id)
+            continue;
         // double check this message is for me
         // communication should be on specific channel per robot
         // channel = robot_id + 1, channel 0 reserved for physics plguin
@@ -290,7 +292,7 @@ void Epuck::receive_updates()
         
         // Event state machine
         if(msg.event_state == MSG_EVENT_GPS_ONLY)
-        {
+        { 
             my_pos[0] = msg.robot_x;
             my_pos[1] = msg.robot_y;
             my_pos[2] = msg.heading;

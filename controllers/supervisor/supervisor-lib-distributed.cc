@@ -29,9 +29,7 @@ void SupervisorDistributed::addEvent(){
 void SupervisorDistributed::buildMessage(int16_t robot_id, const Event* event,
                                    message_event_state_t event_state, message_t* msg) {
     // Call the parent class implementation
-    // Supervisor::buildMessage(robot_id, event, event_state, msg);
-    msg->robot_id = robot_id;
-    msg->event_state = event_state;
+    Supervisor::buildMessage(robot_id, event, event_state, msg);
     if (event)
         msg->event_index = event->event_index;
 
@@ -41,26 +39,39 @@ void SupervisorDistributed::reset(){
     // printf("supervisor reset in child\n");
     Supervisor::reset();
 
+    message_t msg;
+    for(int i=0; i < NUM_ROBOTS; ++i){
+        buildMessage(i, NULL, MSG_EVENT_GPS_ONLY, &msg);
+        wb_emitter_set_channel(emitter_, i+1);
+        wb_emitter_send(emitter_, &msg, sizeof(message_t));
+    }
+
+    wb_emitter_set_channel(emitter_, WB_CHANNEL_BROADCAST);
     for(auto e : active_events_){
         // broadcast new event
         message_t msg;
-        wb_emitter_set_channel(emitter_, WB_CHANNEL_BROADCAST);
         buildMessage(-1, e, MSG_EVENT_NEW, &msg);  // robot_id set to -1 because this is broadcasted
         wb_emitter_send(emitter_, &msg, sizeof(message_t));
         // printf("SUP: New event sent %d\n", msg.event_index);
     }
+    
+    // FIXME remove this - only for debugging
+    // for (int i = NUM_ROBOTS; i < 5; i++)
+    // {
+    //     msg.robot_id = i;
+    //     msg.event_state = MSG_QUIT;
+    //     wb_emitter_set_channel(emitter_, i + 1);
+    //     wb_emitter_send(emitter_, &msg, sizeof(message_t));
+    // }
 
 }
 
 bool SupervisorDistributed::step(uint64_t step_size)
 {
-    /*
     clock_ += step_size;
 
     // Events that will be announced next or that have just been assigned/done
     event_queue_t event_queue;
-
-    markEventsReached(event_queue);
 
     // ** Add a random new event, if the time has come
     assert(t_next_event_ > 0);
@@ -80,7 +91,7 @@ bool SupervisorDistributed::step(uint64_t step_size)
 
             if (wb_receiver_get_data_size(receivers_[i]) == sizeof(message_event_state_t))
             {
-                pmsg = (message_event_state_t* ) wb_receiver_get_data(receivers_[i]);
+                pmsg = (message_event_status_t* ) wb_receiver_get_data(receivers_[i]);
                 assert(pmsg->robot_id == i);
 
                 if (pmsg->event_state == MSG_EVENT_DONE) {
@@ -144,5 +155,4 @@ bool SupervisorDistributed::step(uint64_t step_size)
     {
         return true;
     } // continue
-    */
 }

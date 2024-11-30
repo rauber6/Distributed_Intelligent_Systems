@@ -17,7 +17,9 @@ typedef enum {
 } TaskType;
 
 typedef struct{
-    uint8_t id;
+    uint16_t id;
+    uint8_t index;
+    TaskType type;
     float posX;
     float posY;
 } task_t;
