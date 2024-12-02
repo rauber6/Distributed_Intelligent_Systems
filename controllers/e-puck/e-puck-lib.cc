@@ -83,6 +83,10 @@ void Epuck::reset()
 
     // Reset stats
     stat_max_velocity = 0.0;
+
+    wb_motor_set_velocity(left_motor, 0);
+    wb_motor_set_velocity(right_motor, 0);
+    
 }
 
 void Epuck::update_state(int _sum_distances)
