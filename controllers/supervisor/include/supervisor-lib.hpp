@@ -46,7 +46,7 @@ using namespace std;
 #define NUM_EVENTS 10               // number of total tasks
 #define TOTAL_EVENTS_TO_HANDLE 100   // Events after which simulation stops or...
 #define MAX_RUNTIME (3*60*1000)      // ...total runtime after which simulation stops
-//
+
 extern WbNodeRef g_event_nodes[NUM_EVENTS];
 extern vector<WbNodeRef> g_event_nodes_free;
 
@@ -70,6 +70,7 @@ public:
   // Auction data
   uint64_t t_announced_;        //time at which event was announced to robots
   bitset<NUM_ROBOTS> bids_in_;
+  bitset<NUM_ROBOTS> bids_out_;
   uint16_t best_bidder_;        //id of the robot that had the best bid so far
   double best_bid_;             //value of the best bid (lower is better)
   uint64_t t_done_;             //time at which the assigned robot reached the event
@@ -138,8 +139,15 @@ public:
       best_bid_ = bid;
       bidder_index = index;  
     }
-    bids_in_.set(bidder);
-    if (bids_in_.all()) assigned_to_ = best_bidder_;
+
+    if(bid < 0){
+      bids_out_.set(bidder);
+    }
+    else{
+      bids_in_.set(bidder);
+    }
+
+    if (bids_in_.any() && (bids_in_.count() + bids_out_.count()) == NUM_ROBOTS) assigned_to_ = best_bidder_;
   }
 
   void restartAuction() {
