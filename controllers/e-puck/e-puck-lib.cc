@@ -12,10 +12,6 @@ Epuck::Epuck() {
     target_list_length = 0;
 };
 
-// Epuck::~Epuck(){
-
-// };
-
 void Epuck::reset()
 {
     wb_robot_init();
@@ -85,24 +81,29 @@ void Epuck::reset()
 }
 
 void Epuck::update_state(int _sum_distances)
-{   
+{   printf("update_state called \n");
     if (_sum_distances > STATECHANGE_DIST && state == GO_TO_GOAL)
     {
+        printf("new state of: ", robot_id, "OBSTACLE_AVOID, case 1 \n");
         state = OBSTACLE_AVOID;
     }
     else if(target_valid && task_in_progress && state != PERFORMING_TASK)
     {
+        printf("new state of: ", robot_id, "OBSTACLE_AVOID \n");
         state = PERFORMING_TASK;
     }
     else if (target_valid && state != PERFORMING_TASK)
     {
+        printf("new state of: ", robot_id, "OBSTACLE_AVOID \n");
         state = GO_TO_GOAL;
     }
     else if(state != PERFORMING_TASK)
     {
+        printf("new state of: ", robot_id, "OBSTACLE_AVOID \n");
         state = DEFAULT_STATE;
     }
     else if(state == PERFORMING_TASK && (clock - clock_task) >= (get_task_time(robot_type, TaskType(target[0][3]))*1000)){
+        printf("new state of: ", robot_id, "OBSTACLE_AVOID, case 2 \n");
         state = OBSTACLE_AVOID;
         task_in_progress = 0;
 
@@ -145,6 +146,7 @@ void Epuck::update_self_motion(int msl, int msr) {
 
 void Epuck::compute_avoid_obstacle(int *msl, int *msr, int distances[]) 
 {
+    printf("compute_avoid_obstacle for ", robot_id, "\n");
     int d1=0,d2=0;       // motor speed 1 and 2     
     int sensor_nb;       // FOR-loop counters    
 
