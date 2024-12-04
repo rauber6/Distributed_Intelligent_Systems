@@ -28,6 +28,7 @@
 #include "../supervisor/include/taskType.hpp"
 
 #define MAX_SPEED_WEB 6.28 // Maximum speed webots
+#define EVENT_RANGE (0.1) // also defined in supervisor-lib.hpp, to be cleaned up
 
 #define DEBUG 1
 #define TIME_STEP 64 // Timestep (ms)
@@ -83,6 +84,7 @@ public:
     void compute_go_to_goal(int *msl, int *msr);
     void run(int ms);
     void receive_updates();
+    void check_if_obstacle_reached();
     
     // Abstract methods
     virtual void msgEventDone(message_t msg) = 0;

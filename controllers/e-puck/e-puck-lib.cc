@@ -81,29 +81,29 @@ void Epuck::reset()
 }
 
 void Epuck::update_state(int _sum_distances)
-{   printf("update_state called \n");
+{   //printf("update_state called \n");
     if (_sum_distances > STATECHANGE_DIST && state == GO_TO_GOAL)
     {
-        printf("new state of: ", robot_id, "OBSTACLE_AVOID, case 1 \n");
+        if(robot_id == 2) printf("new state of: %d OBSTACLE_AVOID, case 1 \n", robot_id);
         state = OBSTACLE_AVOID;
     }
     else if(target_valid && task_in_progress && state != PERFORMING_TASK)
     {
-        printf("new state of: ", robot_id, "OBSTACLE_AVOID \n");
+        if(robot_id == 2) printf("new state of: %d PERFORMING_TASK \n", robot_id);
         state = PERFORMING_TASK;
     }
     else if (target_valid && state != PERFORMING_TASK)
     {
-        printf("new state of: ", robot_id, "OBSTACLE_AVOID \n");
+        if(robot_id == 2) printf("new state of: %d GO_TO_GOAL \n", robot_id);
         state = GO_TO_GOAL;
     }
     else if(state != PERFORMING_TASK)
     {
-        printf("new state of: ", robot_id, "OBSTACLE_AVOID \n");
+        if(robot_id == 2) printf("new state of: %d DEFAULT_STATE \n", robot_id);
         state = DEFAULT_STATE;
     }
     else if(state == PERFORMING_TASK && (clock - clock_task) >= (get_task_time(robot_type, TaskType(target[0][3]))*1000)){
-        printf("new state of: ", robot_id, "OBSTACLE_AVOID, case 2 \n");
+        if(robot_id == 2) printf("new state of: %d OBSTACLE_AVOID \n", robot_id);
         state = OBSTACLE_AVOID;
         task_in_progress = 0;
 
@@ -146,7 +146,7 @@ void Epuck::update_self_motion(int msl, int msr) {
 
 void Epuck::compute_avoid_obstacle(int *msl, int *msr, int distances[]) 
 {
-    printf("compute_avoid_obstacle for ", robot_id, "\n");
+    //printf("compute_avoid_obstacle for ", robot_id, "\n");
     int d1=0,d2=0;       // motor speed 1 and 2     
     int sensor_nb;       // FOR-loop counters    
 
@@ -214,6 +214,10 @@ void Epuck::run(int ms)
 
     // State may change because of obstacles
     update_state(sum_distances);
+
+    // Change state to PERFORMING_TASK if the robot calculates that it has reached the goal
+    check_if_obstacle_reached();
+
 
     // Custom instruction
     run_custom_post_update();
@@ -368,7 +372,39 @@ void Epuck::receive_updates()
     }
 }
 
+void Epuck::check_if_obstacle_reached()
+{
+    //if distance between event assigned to the robot and the robot is smaller than EVENT_RANGE
+    //then change state to PERFORMING_TASK
 
+    if(robot_id == 2) printf("robot with id %d at %f , %f going to %f , %f\n", robot_id, my_pos[0], my_pos[1], target[0][0], target[0][1]);
+    if(dist(my_pos[0], my_pos[1], target[0][0], target[0][1]) < EVENT_RANGE)
+    {
+        if(robot_id == 2) printf("robot %d reached its target \n", robot_id);
+        //state = PERFORMING_TASK; //
+    }
+}
+
+//may be misdefined
+/*
+void Epuck::markEventsReached(event_queue_t& event_queue) {
+    for (auto& event : events_) {
+      if (!event->is_assigned() || event->is_done())
+        continue;
+      
+      const double *robot_pos = getRobotPos(event->assigned_to_);
+      Point2d robot_pos_pt(robot_pos[0], robot_pos[1]);
+      double dist = event->pos_.Distance(robot_pos_pt);
+
+      if (dist <= EVENT_RANGE && !event->reached_  && event->in_progress_) { // 
+        printf("D robot %d reached event %d\n", event->assigned_to_,
+          event->id_);
+        event->reached_ = 1;
+        event_queue.emplace_back(event.get(), MSG_EVENT_REACHED);
+      }
+    }
+  }
+*/
 
 double rnd(void) {
   return ((double)rand())/((double)RAND_MAX);
