@@ -32,7 +32,7 @@ using namespace std;
 #define DBG(x) printf x
 #define RAND ((float) rand()/RAND_MAX)
 
-#define STEP_SIZE 2000 //FIXME restore 64            // simulation step size
+#define STEP_SIZE 64           // simulation step size
 #define AUCTION_TIMEOUT 1000    // number of steps after which an auction stops
 
 #define EVENT_RANGE (0.1)      // distance within which a robot must come to do event
@@ -42,8 +42,8 @@ using namespace std;
 #define GPS_INTERVAL (500)
 
 // Parameters that can be changed
-#define NUM_ROBOTS 5              // Change this also in the epuck_crown.c!
-#define NUM_EVENTS 10               // number of total tasks
+#define NUM_ROBOTS 2              // Change this also in the epuck_crown.c!
+#define NUM_EVENTS 3 //10               // number of total tasks
 #define TOTAL_EVENTS_TO_HANDLE 100   // Events after which simulation stops or...
 #define MAX_RUNTIME (3*60*1000)      // ...total runtime after which simulation stops
 

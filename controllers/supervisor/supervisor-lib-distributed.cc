@@ -40,12 +40,24 @@ void SupervisorDistributed::reset(){
     Supervisor::reset();
 
     message_t msg;
+
+    // FIXME remove this - only for debugging
+    for (int i = NUM_ROBOTS; i < 5; i++)
+    {
+        msg.robot_id = i;
+        msg.event_state = MSG_QUIT;
+        wb_emitter_set_channel(emitter_, i + 1);
+        wb_emitter_send(emitter_, &msg, sizeof(message_t));
+    }
+
+    // send robots their positin
     for(int i=0; i < NUM_ROBOTS; ++i){
         buildMessage(i, NULL, MSG_EVENT_GPS_ONLY, &msg);
         wb_emitter_set_channel(emitter_, i+1);
         wb_emitter_send(emitter_, &msg, sizeof(message_t));
     }
 
+    // send out tasks
     wb_emitter_set_channel(emitter_, WB_CHANNEL_BROADCAST);
     for(auto e : active_events_){
         // broadcast new event
@@ -55,14 +67,7 @@ void SupervisorDistributed::reset(){
         // printf("SUP: New event sent %d\n", msg.event_index);
     }
     
-    // FIXME remove this - only for debugging
-    // for (int i = NUM_ROBOTS; i < 5; i++)
-    // {
-    //     msg.robot_id = i;
-    //     msg.event_state = MSG_QUIT;
-    //     wb_emitter_set_channel(emitter_, i + 1);
-    //     wb_emitter_send(emitter_, &msg, sizeof(message_t));
-    // }
+
 
 }
 
