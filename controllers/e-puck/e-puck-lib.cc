@@ -217,21 +217,9 @@ void Epuck::run(int ms)
 
     if(check_if_event_reached() == true && !task_in_progress)
         {
-    
-            if((int)target[0][2] != msg.event_id)
-            {
-                const message_event_status_t my_task = {robot_id, msg.event_id, MSG_EVENT_NOT_IN_PROGRESS};
-                wb_emitter_set_channel(emitter_tag, robot_id+1);
-                wb_emitter_send(emitter_tag, &my_task, sizeof(message_event_status_t)); 
-            } 
-            else {
-                task_in_progress = 1;
-                clock_task = clock;
-            }
-
-    // Change state to PERFORMING_TASK if the robot calculates that it has reached the goal
-    //check_if_event_reached();
-
+           task_in_progress = 1;
+           clock_task = clock;
+        }
 
     // Custom instruction
     run_custom_post_update();
@@ -323,7 +311,7 @@ void Epuck::receive_updates()
             wb_robot_step(TIME_STEP);
             exit(0);
         }
-        /*
+        /* //uncommend in centralized case
         else if(msg.event_state == MSG_EVENT_REACHED && !task_in_progress)
         {
     
@@ -397,8 +385,6 @@ bool Epuck::check_if_event_reached()
     if(dist(my_pos[0], my_pos[1], target[0][0], target[0][1]) < EVENT_RANGE)
     {
         if(robot_id == 2) printf("robot %d reached its target \n", robot_id);
-        //state = PERFORMING_TASK;
-        //if(robot_id == 2) printf("STATE of robot %d set to PERFORMING_TASK \n", robot_id);
         return true;
     }
     else return false;
