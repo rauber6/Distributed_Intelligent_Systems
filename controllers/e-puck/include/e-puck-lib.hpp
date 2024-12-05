@@ -29,6 +29,7 @@
 #include "../supervisor/include/taskType.hpp"
 
 #define MAX_SPEED_WEB 6.28 // Maximum speed webots
+#define EVENT_RANGE (0.1) // also defined in supervisor-lib.hpp, to be cleaned up
 
 #define DEBUG 1
 #define TIME_STEP 2000 //FIXME restore 64 // Timestep (ms)
@@ -87,6 +88,7 @@ public:
     void compute_go_to_goal(int *msl, int *msr);
     void run(int ms);
     void receive_updates();
+    bool check_if_event_reached();
     
     // Abstract methods
     // FIXME make this protected
