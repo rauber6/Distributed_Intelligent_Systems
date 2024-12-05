@@ -8,17 +8,27 @@
 #include "include/supervisor-center-lib.hpp"
 #include <memory>
 
-#define MOD 2 // 0 - centralised single task, 1 - distributed single task, 2 - centralised planning, 3 - distributed planning 
+#define MOD 1 // 0 - centralised single task, 1 - distributed single task, 2 - centralised planning, 3 - distributed planning 
 
 // MAIN LOOP (does steps)
 int main(void) 
 {
+  
   std::shared_ptr<Supervisor> supervisor;
   
-  if(MOD == 2){
-    supervisor = std::make_shared<SupervisorCentralised>();
-  }
+
+  switch (MOD)
+  {
+    case 1:
+      supervisor = std::make_shared<SupervisorDistributed>();
+      break;
+    case 2:
+      supervisor = std::make_shared<SupervisorCentralised>();
+      break;
   
+    default:
+      break;
+  }
   // initialization
   wb_robot_init();
   link_event_nodes();
