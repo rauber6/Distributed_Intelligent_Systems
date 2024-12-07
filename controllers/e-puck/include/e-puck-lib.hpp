@@ -48,6 +48,7 @@
 #define NUM_TASKS 3 //10
 
 #define WB_CHANNEL_BROADCAST -1
+#define SUP_REC_BASE_CHANNEL 900
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /* Collective decision parameters */
@@ -61,6 +62,7 @@ typedef enum
     OBSTACLE_AVOID = 3,
     RANDOM_WALK = 4,
     PERFORMING_TASK = 5,
+    TASK_COMPLETED = 6
 } robot_state_t;
 
 #define DEFAULT_STATE (STAY)
@@ -159,6 +161,8 @@ class EpuckDistributed : public Epuck{
         bool G[NUM_ROBOTS];  // adjacency vector
 
         int8_t assigned_task;
+
+        WbDeviceTag emitter_tag_sup;
 
         void msgEventDone(message_t msg) override;
         void msgEventWon(message_t msg) override;

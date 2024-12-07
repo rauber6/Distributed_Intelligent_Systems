@@ -109,12 +109,11 @@ void Epuck::update_state(int _sum_distances)
     }
     else if(state == PERFORMING_TASK && (clock - clock_task) >= (get_task_time(robot_type, TaskType(target[0][3]))*1000)){
         // if(robot_id == 0) printf("new state of: %d OBSTACLE_AVOID \n", robot_id);
-        state = OBSTACLE_AVOID;
-        task_in_progress = 0;
 
-        const message_event_status_t my_task = {robot_id, uint16_t(target[0][2]), MSG_EVENT_DONE};
-        wb_emitter_set_channel(emitter_tag, robot_id+1);
-        wb_emitter_send(emitter_tag, &my_task, sizeof(message_event_status_t));  
+        // here add a new state TASK completed
+        // then in each subclass in update_state_custom, do different things according to the subclass
+
+        state = TASK_COMPLETED;
     }
 
     update_state_custom();
@@ -271,6 +270,7 @@ void Epuck::receive_updates()
     int k;
 
     while (wb_receiver_get_queue_length(receiver_tag) > 0) {
+
         const message_t *pmsg = (const message_t *) wb_receiver_get_data(receiver_tag);
         
         // save a copy, cause wb_receiver_next_packet invalidates the pointer
@@ -383,7 +383,6 @@ bool Epuck::check_if_event_reached()
     // if(robot_id == 2) printf("robot with id %d at %f , %f going to %f , %f\n", robot_id, my_pos[0], my_pos[1], target[0][0], target[0][1]);
     if(dist(my_pos[0], my_pos[1], target[0][0], target[0][1]) < EVENT_RANGE)
     {
-        if(robot_id == 0) printf("robot %d reached its target \n", robot_id);
         return true;
     }
     else return false;
