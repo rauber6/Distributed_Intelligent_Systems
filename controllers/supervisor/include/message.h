@@ -28,8 +28,8 @@ typedef struct {
   TaskType event_type;
   double event_x;
   double event_y;
-  // ]]
   int event_index;
+  // ]]
   int16_t sender_id;
   float market_bids[NUM_TASKS];
   int16_t market_winners[NUM_TASKS];
@@ -46,5 +46,6 @@ typedef struct {
 typedef struct{
   uint16_t robot_id;
   uint16_t event_id;
+  int event_index;
   message_event_state_t event_state;
 }message_event_status_t;

@@ -49,6 +49,8 @@ using namespace std;
 
 #define WB_CHANNEL_BROADCAST -1
 #define SUPERVISOR_SENDER_ID 999
+#define SUP_REC_BASE_CHANNEL 900
+#define RX_PERIOD 2  // time difference between two received elements (ms) (1000)
 
 
 extern WbNodeRef g_event_nodes[NUM_EVENTS];
@@ -85,7 +87,7 @@ public:
   uint64_t in_progress_;
 
 // Public functions
-public:
+public: 
   //Event creation
   Event(uint16_t id) : id_(id), pos_(rand_coord(), rand_coord()),
     assigned_to_(-1), t_announced_(-1), best_bidder_(-1), best_bid_(0.0), t_done_(-1), reached_(0.0), in_progress_(0.0)
@@ -94,7 +96,7 @@ public:
     g_event_nodes_free.pop_back();
 
     taskType = generate_random_task();
-    cout << "Task " << strType(taskType) << " generate" << endl;
+    // cout << "Task " << strType(taskType) << " generate" << endl;
     
     double event_node_pos[3];           // Place event in arena
     event_node_pos[0] = pos_.x;
@@ -225,12 +227,12 @@ class SupervisorDistributed : public Supervisor {
     void reset() override;
     bool step(uint64_t step_size) override;
 
-  private:
-    Event* active_events_[NUM_EVENTS];
+  private:  
+    std::vector<Event> active_events_;
     void addEvent() override;
     void addEvent(int8_t index);
     void buildMessage(int16_t robot_id, const Event* event, message_event_state_t event_state, message_t* msg);
 
     void markEventsReached(event_queue_t& event_queue);
-
+    
 };
