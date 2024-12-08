@@ -84,7 +84,7 @@ public:
     void compute_go_to_goal(int *msl, int *msr);
     void run(int ms);
     void receive_updates();
-    void check_if_obstacle_reached();
+    bool check_if_event_reached();
     
     // Abstract methods
     virtual void msgEventDone(message_t msg) = 0;
