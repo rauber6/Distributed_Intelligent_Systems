@@ -215,11 +215,11 @@ void Epuck::run(int ms)
     // State may change because of obstacles
     update_state(sum_distances);
 
-    if(check_if_event_reached() == true && !task_in_progress)
-        {
-           task_in_progress = 1;
-           clock_task = clock;
-        }
+    // if(check_if_event_reached() == true && !task_in_progress)
+    //     {
+    //        task_in_progress = 1;
+    //        clock_task = clock;
+    //     }
 
     // Custom instruction
     run_custom_post_update();
@@ -311,7 +311,6 @@ void Epuck::receive_updates()
             wb_robot_step(TIME_STEP);
             exit(0);
         }
-        /* //uncommend in centralized case
         else if(msg.event_state == MSG_EVENT_REACHED && !task_in_progress)
         {
     
@@ -327,7 +326,6 @@ void Epuck::receive_updates()
             }
 
         }
-        */
         else if(msg.event_state == MSG_EVENT_DONE)
          {
             msgEventDone(msg);
