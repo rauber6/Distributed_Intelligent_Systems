@@ -14,6 +14,7 @@ Epuck::Epuck() {
 
 void Epuck::reset()
 {
+    // printf("Epuck reset parent\n");
     wb_robot_init();
     int i;
 
@@ -78,6 +79,10 @@ void Epuck::reset()
 
     // Reset stats
     stat_max_velocity = 0.0;
+
+    wb_motor_set_velocity(left_motor, 0);
+    wb_motor_set_velocity(right_motor, 0);
+    
 }
 
 void Epuck::update_state(int _sum_distances)
@@ -278,10 +283,12 @@ void Epuck::receive_updates()
         memcpy(&msg, pmsg, sizeof(message_t));
         wb_receiver_next_packet(receiver_tag);
 
+        if(msg.sender_id == robot_id)
+            continue;
         // double check this message is for me
         // communication should be on specific channel per robot
         // channel = robot_id + 1, channel 0 reserved for physics plguin
-        if(msg.robot_id != robot_id) {
+        if((msg.robot_id != (int16_t)robot_id) && (msg.robot_id != -1)) {
             fprintf(stderr, "Invalid message: robot_id %d "  "doesn't match receiver %d\n", msg.robot_id, robot_id);
             //return;
             exit(1);
@@ -297,7 +304,7 @@ void Epuck::receive_updates()
         
         // Event state machine
         if(msg.event_state == MSG_EVENT_GPS_ONLY)
-        {
+        { 
             my_pos[0] = msg.robot_x;
             my_pos[1] = msg.robot_y;
             my_pos[2] = msg.heading;
