@@ -2,6 +2,10 @@
 
 SupervisorDistributed::SupervisorDistributed() : Supervisor() {
 
+    // printf("SV: events_ mem: %p\n", &events_.back());
+    // events_.reserve(10000);
+    // printf("SV: events_ mem after res: %p\n", &events_.back());
+
 }
 
 void SupervisorDistributed::addEvent(int8_t index){
@@ -17,6 +21,7 @@ void SupervisorDistributed::addEvent(int8_t index){
         active_events_[index] = *pNewEvent;  // replace existing instance
     }
     events_.push_back( (unique_ptr<Event>) pNewEvent); // add to list
+    // printf("SV: mem of last task (id%d): %p\n", events_.back()->id_, &events_[events_.size() - 1]);
     assert(num_active_events_ < NUM_EVENTS); // check max. active events not reached
     t_next_event_ = clock_ + expovariate(EVENT_GENERATION_DELAY);
     
@@ -146,24 +151,26 @@ bool SupervisorDistributed::step(uint64_t step_size)
                 // std::cout << "VAL " << pmsg->event_id << std::endl;
                 // std::cout << "VAL " << i << std::endl;
                 // std::cout << "VAL " << events_.at(pmsg->event_id).get()->id_ << std::endl;
-                Event* event = events_.at(pmsg->event_id).get();
+                // Event* event = events_.at(pmsg->event_id).get();
                 // std::cout << "val" << event->id_ << std::endl;
                 // std::cout << "2" << std::endl;
                 // assert(event->in_progress_);
                 // return 1;
                 message_event_state_t state = pmsg->event_state;
+                int event_id = pmsg->event_id;
+                int event_index = pmsg->event_index;
                 if(state == MSG_EVENT_DONE){
                     num_events_handled_++;
-                    event->markDone(clock_);
+                    // event->markDone(clock_);
                     num_active_events_--;
-                    event_queue.emplace_back(event, MSG_EVENT_DONE);
-                    printf("SV: robot %d completed event %d with index %d\n", pmsg->robot_id, event->id_, event->event_index);
+                    // event_queue.emplace_back(event, MSG_EVENT_DONE);
+                    printf("SV: robot %d completed event %d with index %d\n", pmsg->robot_id, event_id, event_index);
 
                     // send new task
-                    addEvent(event->event_index);
+                    addEvent(event_index);
                     // printf("event created\n");
                     // wb_emitter_set_channel(emitter_, WB_CHANNEL_BROADCAST);
-                    Event e = active_events_[event->event_index]; // use index of completed task to retrieve the newly-generated one                    
+                    Event e = active_events_[event_index]; // use index of completed task to retrieve the newly-generated one                    
                     message_t msg;
                     buildMessage(-1, &e, MSG_EVENT_NEW, &msg);  // robot_id set to -1 because this is broadcasted
                     // send new task
@@ -171,7 +178,8 @@ bool SupervisorDistributed::step(uint64_t step_size)
                         wb_emitter_set_channel(emitter_, i+1);
                         wb_emitter_send(emitter_, &msg, sizeof(message_t));
                     }
-                    std::cout << "SV: task ind:" << e.event_index  << " pos:" << e.pos_ << " broadcasted" <<  std::endl;
+
+                    printf("SV: task %d broadcasted\n", e.event_index);
                 }       
                 wb_receiver_next_packet(receivers_[i]);   
             }

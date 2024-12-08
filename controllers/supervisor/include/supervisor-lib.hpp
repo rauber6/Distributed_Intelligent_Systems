@@ -42,8 +42,8 @@ using namespace std;
 #define GPS_INTERVAL (500)
 
 // Parameters that can be changed
-#define NUM_ROBOTS 2              // Change this also in the epuck_crown.c!
-#define NUM_EVENTS 3 //10               // number of total tasks
+#define NUM_ROBOTS 3              // Change this also in the epuck_crown.c!
+#define NUM_EVENTS 10               // number of total tasks
 #define TOTAL_EVENTS_TO_HANDLE 100   // Events after which simulation stops or...
 #define MAX_RUNTIME (3*60*1000)      // ...total runtime after which simulation stops
 
@@ -234,5 +234,5 @@ class SupervisorDistributed : public Supervisor {
     void buildMessage(int16_t robot_id, const Event* event, message_event_state_t event_state, message_t* msg);
 
     void markEventsReached(event_queue_t& event_queue);
-    
+
 };

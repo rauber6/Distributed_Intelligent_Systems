@@ -29,6 +29,9 @@ int main(void)
     default:
       break;
   }
+
+  // printf("SV %p\n", supervisor.get());
+
   // initialization
   wb_robot_init();
   link_event_nodes();

@@ -257,19 +257,3 @@ DEF e-puck(2) epuck_custom {
   emitter_channel 3
   receiver_channel 3
 }
-DEF e-puck(3) epuck_custom {
-  translation 1.11498 -0.301521 0
-  rotation 0 0 1 3.14
-  name "e-puck(3)"
-  controller "e-puck"
-  emitter_channel 4
-  receiver_channel 4
-}
-DEF e-puck(4) epuck_custom {
-  translation 1.11116 -0.11395 0
-  rotation 0 0 1 3.14
-  name "e-puck(4)"
-  controller "e-puck"
-  emitter_channel 5
-  receiver_channel 5
-}

@@ -18,9 +18,9 @@
 int main(int argc, char **argv) 
 {
 
-    std::shared_ptr<Epuck> epuck;
+  std::shared_ptr<Epuck> epuck;
 
-    switch (MOD)
+  switch (MOD)
   {
     case 1:
       epuck = std::make_shared<EpuckDistributed>();
@@ -33,12 +33,14 @@ int main(int argc, char **argv)
       break;
   }
 
-    epuck->reset();
-    // RUN THE MAIN ALGORIHM
-    while (wb_robot_step(TIME_STEP) != -1) {
-      epuck->run(TIME_STEP);
-    }
-    wb_robot_cleanup();
+  printf("Epuck %p\n", epuck.get());
 
-    return 0;
+  epuck->reset();
+  // RUN THE MAIN ALGORIHM
+  while (wb_robot_step(TIME_STEP) != -1) {
+    epuck->run(TIME_STEP);
+  }
+  wb_robot_cleanup();
+
+  return 0;
 }

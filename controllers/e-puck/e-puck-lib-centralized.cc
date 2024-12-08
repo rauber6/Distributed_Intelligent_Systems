@@ -181,3 +181,5 @@ void EpuckCentralized::run_custom_post_update(){
         wb_emitter_send(emitter_tag, &my_task, sizeof(message_event_status_t)); 
     }
 }
+
+void EpuckCentralized::pre_run(){}

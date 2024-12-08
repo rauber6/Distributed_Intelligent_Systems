@@ -82,7 +82,7 @@ void Epuck::reset()
 
     wb_motor_set_velocity(left_motor, 0);
     wb_motor_set_velocity(right_motor, 0);
-    
+
 }
 
 void Epuck::update_state(int _sum_distances)
@@ -195,6 +195,9 @@ void Epuck::compute_go_to_goal(int *msl, int *msr)
 
 void Epuck::run(int ms)
 {
+    
+    pre_run();
+    
     float msl_w, msr_w;
     // Motor speed and sensor variables	
     int msl=0,msr=0;                // motor speed left and right
@@ -254,9 +257,18 @@ void Epuck::run(int ms)
     // Set the speed
     msl_w = msl*MAX_SPEED_WEB/1000;
     msr_w = msr*MAX_SPEED_WEB/1000;
-    wb_motor_set_velocity(left_motor, msl_w);
-    wb_motor_set_velocity(right_motor, msr_w);
+    // printf("R%d: Motor device tag %d - %d\n", robot_id, left_motor, right_motor);
+    if( (left_motor != 1) || (right_motor != 3)){
+        printf("[%d]R%d: Motor device tag %d(%p) - %d(%p)\n",clock, robot_id, left_motor, &left_motor, right_motor, &right_motor);
+        exit(1);
+    }
+    // wb_motor_set_velocity(left_motor, msl_w);
+    // wb_motor_set_velocity(right_motor, msr_w);
+    wb_motor_set_velocity(1, msl_w);
+    wb_motor_set_velocity(3, msr_w);
     update_self_motion(msl, msr);
+
+    pre_run();
 
     // Update clock
     clock += ms;
@@ -340,9 +352,10 @@ void Epuck::receive_updates()
         {     
             msgEventNew(msg);
         }
+
+        msgEventCustom(msg);
     }
 
-    msgEventCustom(msg);
 
 
     // Communication with physics plugin (channel 0)            
