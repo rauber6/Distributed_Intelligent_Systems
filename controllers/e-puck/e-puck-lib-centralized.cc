@@ -169,7 +169,18 @@ void EpuckCentralized::msgEventCustom(message_t msg){
 }
 
 void EpuckCentralized::update_state_custom(){
+    
+    if(state == TASK_COMPLETED)
+    {
+        state = DEFAULT_STATE;
+        task_in_progress = 0;
 
+
+        const message_event_status_t my_task = {robot_id, uint16_t(target[0][2]), 0, MSG_EVENT_DONE};
+        wb_emitter_set_channel(emitter_tag, robot_id+1);
+        wb_emitter_send(emitter_tag, &my_task, sizeof(message_event_status_t));  
+
+    }
 }
 
 void EpuckCentralized::run_custom_pre_update(){
