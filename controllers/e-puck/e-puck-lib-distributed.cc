@@ -110,7 +110,7 @@ void EpuckDistributed::run_custom_pre_update(){
 
 
         // extract max valid bid
-        auto max_bid = std::max_element(std::begin(h), std::end(h));
+        auto max_bid = std::max(std::begin(h), std::end(h));
         int max_index = std::distance(std::begin(h), max_bid);
 
         if( *max_bid > 0 ){  // f there is at least one valid task

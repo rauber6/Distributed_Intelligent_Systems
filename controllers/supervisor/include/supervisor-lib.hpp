@@ -32,7 +32,7 @@ using namespace std;
 #define DBG(x) printf x
 #define RAND ((float) rand()/RAND_MAX)
 
-#define STEP_SIZE 2000 //FIXME restore 64            // simulation step size
+#define STEP_SIZE 64            // simulation step size
 #define AUCTION_TIMEOUT 1000    // number of steps after which an auction stops
 
 #define EVENT_RANGE (0.1)      // distance within which a robot must come to do event
