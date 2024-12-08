@@ -44,15 +44,15 @@
 #define INVALID -999
 #define BREAK -999 // for physics plugin
 
-#define NUM_ROBOTS 5 // Change this also in the supervisor!
-#define NUM_TASKS 10
+#define NUM_ROBOTS 2 // Change this also in the supervisor!
+#define NUM_TASKS 3 //10
 
 #define WB_CHANNEL_BROADCAST -1
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /* Collective decision parameters */
 
-#define STATECHANGE_DIST 200 //500 // minimum value of all sensor inputs combined to change to obstacle avoidance mode
+#define STATECHANGE_DIST 500 // minimum value of all sensor inputs combined to change to obstacle avoidance mode
 
 typedef enum
 {

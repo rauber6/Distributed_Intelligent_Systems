@@ -36,7 +36,9 @@ int main(int argc, char **argv)
 
     epuck->reset();
     // RUN THE MAIN ALGORIHM
-    while (wb_robot_step(TIME_STEP) != -1) {epuck->run(TIME_STEP);}
+    while (wb_robot_step(TIME_STEP) != -1) {
+      epuck->run(TIME_STEP);
+    }
     wb_robot_cleanup();
 
     return 0;

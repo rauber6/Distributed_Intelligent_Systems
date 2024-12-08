@@ -365,10 +365,10 @@ bool Epuck::check_if_event_reached()
     //if distance between event assigned to the robot and the robot is smaller than EVENT_RANGE
     //then change state to PERFORMING_TASK
 
-    if(robot_id == 2) printf("robot with id %d at %f , %f going to %f , %f\n", robot_id, my_pos[0], my_pos[1], target[0][0], target[0][1]);
+    // if(robot_id == 2) printf("robot with id %d at %f , %f going to %f , %f\n", robot_id, my_pos[0], my_pos[1], target[0][0], target[0][1]);
     if(dist(my_pos[0], my_pos[1], target[0][0], target[0][1]) < EVENT_RANGE)
     {
-        if(robot_id == 2) printf("robot %d reached its target \n", robot_id);
+        if(robot_id == 0) printf("robot %d reached its target \n", robot_id);
         return true;
     }
     else return false;

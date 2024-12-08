@@ -55,11 +55,13 @@ void EpuckDistributed::msgEventCustom(message_t msg){
         float* neighbor_market_bids = msg.market_bids;
         int16_t* neighbor_market_winners = msg.market_winners;
 
-        printf("R%d: new market received from R%d: [", robot_id, neighbor);
-        for(int i=0; i<NUM_TASKS;++i){
-            std::cout << i << ": ";
-            printf("R%dB%.0f] - [", neighbor_market_winners[i], neighbor_market_bids[i]);
-        }    
+        // printf("R%d: new market received from R%d\n", robot_id, neighbor);
+
+        // printf("R%d: new market received from R%d: [", robot_id, neighbor);
+        // for(int i=0; i<NUM_TASKS;++i){
+        //     std::cout << i << ": ";
+        //     printf("R%dB%.0f] - [", neighbor_market_winners[i], neighbor_market_bids[i]);
+        // }    
         std::cout << std::endl;
 
         for (int i = 0; i < NUM_TASKS; ++i) {
@@ -88,7 +90,8 @@ void EpuckDistributed::run_custom_pre_update(){
 
     // PHASE 2.2
     // drop assigned task if necessary
-    if(is_assigned()){
+    if(is_assigned() && !is_my_bid_better(x[assigned_task], y_bids[assigned_task]) ){
+        printf("R%d: checking if I need to drop bid %d\n", robot_id, assigned_task);
         bool condNeighborBetterBid = (! is_my_bid_better(x[assigned_task], y_bids[assigned_task]));
         bool condSameBid = ( x[assigned_task] == y_bids[assigned_task] );
         bool condNeighborBetterID = (y_winners[assigned_task] < robot_id);  // if tie, task assigned to robot with lower ID
@@ -165,6 +168,15 @@ void EpuckDistributed::run_custom_post_update(){
     memcpy(msg.market_winners, y_winners, sizeof(y_winners));
     wb_emitter_set_channel(emitter_tag, WB_CHANNEL_BROADCAST);
     wb_emitter_send(emitter_tag, &msg, sizeof(message_t));
+
+    //check if task has been reached
+    if( !task_in_progress && assigned_task != -1 && check_if_event_reached() == true)
+    {
+        printf("Robot %d: reached task %d\n", robot_id, assigned_task);
+        task_in_progress = 1;
+        clock_task = clock;
+    }
+
 }
 
 float EpuckDistributed::compare_bids(float bid1, float bid2){
