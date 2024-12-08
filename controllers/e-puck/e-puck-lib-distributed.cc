@@ -79,6 +79,13 @@ void EpuckDistributed::update_state_custom(){
 
 void EpuckDistributed::run_custom_pre_update(){
 
+
+    if(check_if_event_reached() == true && !task_in_progress)
+        {
+           task_in_progress = 1;
+           clock_task = clock;
+        }
+
     // PHASE 2.2
     // drop assigned task if necessary
     if(is_assigned()){

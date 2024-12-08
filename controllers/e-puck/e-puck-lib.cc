@@ -220,12 +220,6 @@ void Epuck::run(int ms)
     // State may change because of obstacles
     update_state(sum_distances);
 
-    // if(check_if_event_reached() == true && !task_in_progress)
-    //     {
-    //        task_in_progress = 1;
-    //        clock_task = clock;
-    //     }
-
     // Custom instruction
     run_custom_post_update();
 
@@ -318,21 +312,6 @@ void Epuck::receive_updates()
             wb_robot_step(TIME_STEP);
             exit(0);
         }
-        else if(msg.event_state == MSG_EVENT_REACHED && !task_in_progress)
-        {
-    
-            if((int)target[0][2] != msg.event_id)
-            {
-                const message_event_status_t my_task = {robot_id, msg.event_id, MSG_EVENT_NOT_IN_PROGRESS};
-                wb_emitter_set_channel(emitter_tag, robot_id+1);
-                wb_emitter_send(emitter_tag, &my_task, sizeof(message_event_status_t)); 
-            } 
-            else {
-                task_in_progress = 1;
-                clock_task = clock;
-            }
-
-        }
         else if(msg.event_state == MSG_EVENT_DONE)
          {
             msgEventDone(msg);
@@ -346,10 +325,10 @@ void Epuck::receive_updates()
         {     
             msgEventNew(msg);
         }
+        else{
+            msgEventCustom(msg);
+        }
     }
-
-    msgEventCustom(msg);
-
 
     // Communication with physics plugin (channel 0)            
     i = 0; k = 1;
