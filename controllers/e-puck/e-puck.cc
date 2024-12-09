@@ -14,7 +14,7 @@
 
 #include "include/e-puck-lib.hpp"
 
-#define MOD 0 // 0 - centralised single task, 1 - distributed single task, 2 - centralised planning, 3 - distributed planning 
+#define MOD 1 // 0 - centralised single task, 1 - distributed single task, 2 - centralised planning, 3 - distributed planning 
 
 int main(int argc, char **argv) 
 {

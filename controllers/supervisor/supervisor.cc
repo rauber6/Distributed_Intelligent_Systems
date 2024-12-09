@@ -7,7 +7,7 @@
 #include "include/supervisor-lib.hpp"
 #include <memory>
 
-#define MOD 0 // 0 - centralised single task, 1 - distributed single task, 2 - centralised planning, 3 - distributed planning 
+#define MOD 1 // 0 - centralised single task, 1 - distributed single task, 2 - centralised planning, 3 - distributed planning 
 
 // MAIN LOOP (does steps)
 int main(void) 

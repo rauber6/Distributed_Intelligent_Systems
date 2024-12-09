@@ -39,6 +39,7 @@
 #define SPEED_UNIT_RADS 0.00628  // Conversion factor from speed unit to radian per second
 #define WHEEL_RADIUS 0.0205      // Wheel radius (meters)
 #define DELTA_T TIME_STEP / 1000 // Timestep (seconds)
+#define BATTERY_LIFE (2*60*1000) // Max number of timesteps robot can spend performing a task (includes going and waiting until its finished)
 #define MAX_SPEED 800            // Maximum speed
 
 #define INVALID -999
@@ -62,7 +63,8 @@ typedef enum
     OBSTACLE_AVOID = 3,
     RANDOM_WALK = 4,
     PERFORMING_TASK = 5,
-    TASK_COMPLETED = 6
+    TASK_COMPLETED = 6,
+    OUT_OF_BATTERY = 7
 } robot_state_t;
 
 #define DEFAULT_STATE (STAY)
@@ -105,7 +107,9 @@ public:
 protected:
     int clock;
     int clock_task;
+    int clock_goal;
     char task_in_progress;
+    int time_active;
     uint16_t robot_id;    // Unique robot ID
     TaskType robot_type;  // robot type
     robot_state_t state;  // State of the robot

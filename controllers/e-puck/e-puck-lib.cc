@@ -10,6 +10,7 @@ Epuck::Epuck() {
     task_in_progress = 0;
     target_valid = 0;
     target_list_length = 0;
+    time_active = 0;
 };
 
 void Epuck::reset()
@@ -87,7 +88,13 @@ void Epuck::reset()
 
 void Epuck::update_state(int _sum_distances)
 {   //printf("update_state called \n");
-    if (_sum_distances > STATECHANGE_DIST && state == GO_TO_GOAL)
+        
+    printf("Robot %d, total active time: %d, total time since start %d.\n", robot_id, time_active, clock);
+
+    if (time_active > BATTERY_LIFE){
+        state = OUT_OF_BATTERY;
+    }
+    else if (_sum_distances > STATECHANGE_DIST && state == GO_TO_GOAL)
     {
         // if(robot_id == 2) printf("new state of: %d OBSTACLE_AVOID, case 1 \n", robot_id);
         state = OBSTACLE_AVOID;
@@ -95,11 +102,15 @@ void Epuck::update_state(int _sum_distances)
     else if(target_valid && task_in_progress && state != PERFORMING_TASK)//target_valid setting to fix//target_valid setting to fix
     {
         // if(robot_id == 2) printf("new state of: %d PERFORMING_TASK \n", robot_id);
+        time_active += clock - clock_goal;
         state = PERFORMING_TASK;
     }
     else if (target_valid && state != PERFORMING_TASK)
     {
         // if(robot_id == 2) printf("new state of: %d GO_TO_GOAL \n", robot_id);
+        if(state != GO_TO_GOAL && state != OBSTACLE_AVOID){
+            clock_goal = clock;
+        }
         state = GO_TO_GOAL;
     }
     else if(state != PERFORMING_TASK)
@@ -112,6 +123,8 @@ void Epuck::update_state(int _sum_distances)
 
         // here add a new state TASK completed
         // then in each subclass in update_state_custom, do different things according to the subclass
+
+        time_active += clock - clock_task;
 
         state = TASK_COMPLETED;
     }
@@ -247,6 +260,12 @@ void Epuck::run(int ms)
             msr = 0;
             break;
 
+        case OUT_OF_BATTERY:
+            printf("Robot %d, OUT OF BATTERY, SHUT DOWN.\n", robot_id);
+            printf("        Total active time: %d.\n", time_active);
+            msl = 0;
+            msr = 0;
+            break;
 
         default:
             printf("Invalid state: robot_id %d \n", robot_id);
@@ -362,8 +381,9 @@ void Epuck::receive_updates()
 
 bool Epuck::check_if_event_reached()
 {
-    //if distance between event assigned to the robot and the robot is smaller than EVENT_RANGE
-    //then change state to PERFORMING_TASK
+    // if distance between event assigned to the robot and the robot is smaller than EVENT_RANGE
+    // then event is reached
+    // used for distributed controllers
 
     // if(robot_id == 2) printf("robot with id %d at %f , %f going to %f , %f\n", robot_id, my_pos[0], my_pos[1], target[0][0], target[0][1]);
     if(dist(my_pos[0], my_pos[1], target[0][0], target[0][1]) < EVENT_RANGE)
