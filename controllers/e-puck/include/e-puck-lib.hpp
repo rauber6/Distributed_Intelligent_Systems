@@ -131,9 +131,10 @@ protected:
 
 class EpuckCentralized : public Epuck{
     public:
-        EpuckCentralized();
-
+        EpuckCentralized(int plan_length = 0, bool task_timeout_off = false);
     private:
+        int plan_length;
+        bool task_timeout_off; 
         void msgEventDone(message_t msg) override;
         void msgEventWon(message_t msg) override;
         void msgEventNew(message_t msg) override;

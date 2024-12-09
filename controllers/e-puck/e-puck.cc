@@ -14,7 +14,7 @@
 
 #include "include/e-puck-lib.hpp"
 
-#define MOD 1 // 0 - centralised single task, 1 - distributed single task, 2 - centralised planning, 3 - distributed planning 
+#define MOD 0 // 0 - centralised single task, 1 - distributed single task, 2 - centralised planning, 3 - distributed planning 
 
 int main(int argc, char **argv) 
 {
@@ -23,11 +23,14 @@ int main(int argc, char **argv)
 
     switch (MOD)
   {
+    case 0:
+      epuck = std::make_shared<EpuckCentralized>(1, false); // plan_length = 1 and task_timeout_off = false
+      break;
     case 1:
       epuck = std::make_shared<EpuckDistributed>();
       break;
     case 2:
-      epuck = std::make_shared<EpuckCentralized>();
+      epuck = std::make_shared<EpuckCentralized>(3, false); // plan_length = 3 and task_timeout_off = false
       break;
   
     default:

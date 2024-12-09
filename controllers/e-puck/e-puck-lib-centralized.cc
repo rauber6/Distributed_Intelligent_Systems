@@ -1,11 +1,12 @@
 #include "include/e-puck-lib.hpp"
 #include "../supervisor/include/taskType.hpp"
 
-#define TASK_TIMEOUT_OFF 1
-#define PLAN_LENGTH 3
+EpuckCentralized::EpuckCentralized(int plan_length, bool task_timeout_off) : Epuck(){
 
-EpuckCentralized::EpuckCentralized() : Epuck(){
+    EpuckCentralized::plan_length = plan_length;
+    EpuckCentralized::task_timeout_off = task_timeout_off;
 
+    printf("plan length: %d\n", EpuckCentralized::plan_length);
 }
 
 void EpuckCentralized::msgEventDone(message_t msg){
@@ -71,7 +72,7 @@ void EpuckCentralized::msgEventNew(message_t msg){
         // You can use dist(ax, ay, bx, by) to determine the distance //
         // between points a and b.                                    //
         ////////////////////////////////////////////////////////////////
-    if(target_list_length < PLAN_LENGTH){    
+    if(target_list_length < plan_length){    
 
         ///*** SIMPLE TACTIC ***///
         indx = target_list_length;
@@ -141,13 +142,11 @@ void EpuckCentralized::msgEventNew(message_t msg){
         delete[] time_to;
         delete[] distance_to;    
     } 
-    #if TASK_TIMEOUT_OFF   
-    else{
+    else if (task_timeout_off){
         const bid_t my_bid = {robot_id, msg.event_id, -1, -1};
         wb_emitter_set_channel(emitter_tag, robot_id+1);
         wb_emitter_send(emitter_tag, &my_bid, sizeof(bid_t));  
     }  
-    #endif
 }
 
 void EpuckCentralized::msgEventCustom(message_t msg){
