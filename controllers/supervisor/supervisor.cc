@@ -4,8 +4,7 @@
 //  Date: -
 //  Rev: -
 //******************************************************************************
-
-#include "include/supervisor-center-lib.hpp"
+#include "include/supervisor-lib.hpp"
 #include <memory>
 
 #define MOD 1 // 0 - centralised single task, 1 - distributed single task, 2 - centralised planning, 3 - distributed planning 

@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include "taskType.hpp"
 
-#define NUM_TASKS 10
+#define NUM_TASKS 3// 10
 
 // A message sent from the supervisor to the robot
 typedef enum {
@@ -46,5 +46,6 @@ typedef struct {
 typedef struct{
   uint16_t robot_id;
   uint16_t event_id;
+  int event_index;
   message_event_state_t event_state;
 }message_event_status_t;

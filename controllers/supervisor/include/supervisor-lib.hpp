@@ -43,12 +43,15 @@ using namespace std;
 
 // Parameters that can be changed
 #define NUM_ROBOTS 2              // Change this also in the epuck_crown.c!
-#define NUM_EVENTS 3 //10               // number of total tasks
+#define NUM_EVENTS 3 //10               // number of total tasks //FIXME remove and use NUM_TASK in message.h
 #define TOTAL_EVENTS_TO_HANDLE 100   // Events after which simulation stops or...
 #define MAX_RUNTIME (3*60*1000)      // ...total runtime after which simulation stops
 
 #define WB_CHANNEL_BROADCAST -1
 #define SUPERVISOR_SENDER_ID 999
+
+#define SUP_REC_BASE_CHANNEL 900
+#define RX_PERIOD 2  // time difference between two received elements (ms) (1000)
 
 
 extern WbNodeRef g_event_nodes[NUM_EVENTS];
@@ -212,21 +215,41 @@ protected:
 
 public:
   Supervisor() : events_(NUM_EVENTS){};
+  virtual ~Supervisor(){}
   virtual void reset();
-  virtual bool step(uint64_t step_size) {};
+  virtual bool step(uint64_t step_size) = 0;
 
 };
 
 void link_event_nodes();
 
+
+
+class SupervisorCentralised : public Supervisor{
+    private:
+        Event* auction; // the event currently being auctioned
+        void markEventsDone(event_queue_t& event_queue);
+        void markEventsReached(event_queue_t& event_queue);
+        void handleAuctionEvents(event_queue_t& event_queue);
+    public:
+        SupervisorCentralised():Supervisor(){} 
+        ~SupervisorCentralised() override {}
+        void reset() override;
+        bool step(uint64_t step_size) override;
+};
+
+
+
+
 class SupervisorDistributed : public Supervisor {
   public:
     SupervisorDistributed();
+    ~SupervisorDistributed() override {}
     void reset() override;
     bool step(uint64_t step_size) override;
 
   private:
-    Event* active_events_[NUM_EVENTS];
+    std::vector<Event> active_events_;
     void addEvent() override;
     void addEvent(int8_t index);
     void buildMessage(int16_t robot_id, const Event* event, message_event_state_t event_state, message_t* msg);
