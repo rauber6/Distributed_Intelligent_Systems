@@ -31,7 +31,6 @@ void EpuckCentralized::msgEventDone(message_t msg){
 }
 
 void EpuckCentralized::msgEventWon(message_t msg){
-    // printf("Robot %d insert task %d at id %d\n", robot_id, msg.event_id, msg.event_index);
     // insert event at index
     if(msg.event_index <= target_list_length){
         for(int i=target_list_length; i>=msg.event_index; i--)
@@ -53,55 +52,20 @@ void EpuckCentralized::msgEventWon(message_t msg){
         target[target_list_length][3] = int(msg.event_type);
     }
     target_valid = 1; //used in general state machine
-    // printf("    New task length %d\n.", target_list_length + 1);
+
     target_list_length = target_list_length+1;
 }
 
 void EpuckCentralized::msgEventNew(message_t msg){
-        //*********         INSERT YOUR TACTIC BELOW         *********//
-        //                                                            //
-        // Determine your bid "d" and the index "indx" at             //
-        // which you want to insert the event into the target list.   //
-        // Available variables:                                       //
-        // my_pos[0], my_pos[1]: Current x and y position of e-puck   //
-        // msg.event_x, msg.event_z: Event x and y position           //
-        // target[n][0], target[n][1]: x and y pos of target n in your//
-        //                             target list                    //
-        // target_list_length: current length of your target list     //
-        //                                                            //
-        // You can use dist(ax, ay, bx, by) to determine the distance //
-        // between points a and b.                                    //
-        ////////////////////////////////////////////////////////////////
+
     if(target_list_length < plan_length){    
 
-        ///*** SIMPLE TACTIC ***///
-        indx = target_list_length;
-        // double d = dist(my_pos[0], my_pos[1], msg.event_x, msg.event_y);
-        ///*** END SIMPLE TACTIC ***///
+        indx = target_list_length;            
             
-
-        ///*** BETTER TACTIC ***///
-        // Place your code here for I17 
-        //*indx = target_list_length;
-        
-        // double d = 0;
-        // // printf("time: %f\n", get_task_time(robot_type, msg.event_type));
-        // if(target_list_length > 0){
-        //   d = dist(target[indx - 1][0], target[indx - 1][1], msg.event_x, msg.event_y)/0.1 + get_task_time(robot_type, msg.event_type);
-        // }else{
-        //   d = dist(my_pos[0], my_pos[1], msg.event_x, msg.event_y)/0.1 + get_task_time(robot_type, msg.event_type); 
-        // }
-        
-        ///*** END BETTER TACTIC ***///
-            
-            
-        ///*** BEST TACTIC ***/// 
         indx = 0;
         double inserted_d = dist(my_pos[0], my_pos[1], msg.event_x, msg.event_y)+ dist(target[0][0], target[0][1], msg.event_x, msg.event_y);
         double prev_d = dist(target[0][0], target[0][1], my_pos[0], my_pos[1]);           
         double d = inserted_d - prev_d;
-        // double time_to[target_list_length] = {0};
-        // double distance_to[target_list_length] = {0};
 
         double* time_to = new double[target_list_length]();
         double* distance_to = new double[target_list_length]();

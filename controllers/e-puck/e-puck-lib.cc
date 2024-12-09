@@ -87,27 +87,27 @@ void Epuck::reset()
 }
 
 void Epuck::update_state(int _sum_distances)
-{   //printf("update_state called \n");
-        
-    printf("Robot %d, total active time: %d, total time since start %d.\n", robot_id, time_active, clock);
-
+{          
     if (time_active > BATTERY_LIFE){
+
+        if(state != OUT_OF_BATTERY){
+            printf("Robot %d, OUT OF BATTERY, SHUT DOWN.\n", robot_id);
+            printf("        Total active time: %ds.\n", (int)time_active/1000);
+        }
+        
         state = OUT_OF_BATTERY;
     }
     else if (_sum_distances > STATECHANGE_DIST && state == GO_TO_GOAL)
     {
-        // if(robot_id == 2) printf("new state of: %d OBSTACLE_AVOID, case 1 \n", robot_id);
         state = OBSTACLE_AVOID;
     }
-    else if(target_valid && task_in_progress && state != PERFORMING_TASK)//target_valid setting to fix//target_valid setting to fix
+    else if(target_valid && task_in_progress && state != PERFORMING_TASK) // target_valid setting to fix//target_valid setting to fix
     {
-        // if(robot_id == 2) printf("new state of: %d PERFORMING_TASK \n", robot_id);
         time_active += clock - clock_goal;
         state = PERFORMING_TASK;
     }
     else if (target_valid && state != PERFORMING_TASK)
     {
-        // if(robot_id == 2) printf("new state of: %d GO_TO_GOAL \n", robot_id);
         if(state != GO_TO_GOAL && state != OBSTACLE_AVOID){
             clock_goal = clock;
         }
@@ -115,11 +115,9 @@ void Epuck::update_state(int _sum_distances)
     }
     else if(state != PERFORMING_TASK)
     {
-        // if(robot_id == 2) printf("new state of: %d DEFAULT_STATE \n", robot_id);
         state = DEFAULT_STATE;
     }
     else if(state == PERFORMING_TASK && (clock - clock_task) >= (get_task_time(robot_type, TaskType(target[0][3]))*1000)){
-        // if(robot_id == 0) printf("new state of: %d OBSTACLE_AVOID \n", robot_id);
 
         // here add a new state TASK completed
         // then in each subclass in update_state_custom, do different things according to the subclass
@@ -163,7 +161,6 @@ void Epuck::update_self_motion(int msl, int msr) {
 
 void Epuck::compute_avoid_obstacle(int *msl, int *msr, int distances[]) 
 {
-    //printf("compute_avoid_obstacle for ", robot_id, "\n");
     int d1=0,d2=0;       // motor speed 1 and 2     
     int sensor_nb;       // FOR-loop counters    
 
@@ -261,8 +258,6 @@ void Epuck::run(int ms)
             break;
 
         case OUT_OF_BATTERY:
-            printf("Robot %d, OUT OF BATTERY, SHUT DOWN.\n", robot_id);
-            printf("        Total active time: %d.\n", time_active);
             msl = 0;
             msr = 0;
             break;
@@ -385,7 +380,6 @@ bool Epuck::check_if_event_reached()
     // then event is reached
     // used for distributed controllers
 
-    // if(robot_id == 2) printf("robot with id %d at %f , %f going to %f , %f\n", robot_id, my_pos[0], my_pos[1], target[0][0], target[0][1]);
     if(dist(my_pos[0], my_pos[1], target[0][0], target[0][1]) < EVENT_RANGE)
     {
         return true;
