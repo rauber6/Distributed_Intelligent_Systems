@@ -112,6 +112,12 @@ bool SupervisorDistributed::step(uint64_t step_size)
                 int event_index = pmsg->event_index;
                 assert(pmsg->robot_id == i);
                 Event* event = events_.at(event_id).get();
+                if (event_index < 0)
+                {
+                    printf("\033[31mSV: event_index (%d) < 0\033[0m\n", event_index);
+                    exit(1);
+                }
+                
 
                 if (pmsg->event_state == MSG_EVENT_DONE) {
                     // update that task - generate a new task with the same ID and notify all robots of this new tasl
@@ -119,8 +125,8 @@ bool SupervisorDistributed::step(uint64_t step_size)
                     event->markDone(clock_);
                     num_active_events_--;
                     // event_queue.emplace_back(event, MSG_EVENT_DONE);
-                    printf("SV: robot %d completed event %d with index %d\n", pmsg->robot_id, event_id, event_index);
-
+                    printf("SV: task %d (id%d) completed by R%d\n",event_index, event_id, pmsg->robot_id );                    
+                    
                     // send new task
                     addEvent(event_index);
                     // printf("event created\n");

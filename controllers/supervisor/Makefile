@@ -44,7 +44,7 @@ CXX_SOURCES = supervisor.cc taskType.cc supervisor-lib.cc supervisor-center-lib.
 ### ---- Compilation options ----
 ### if special compilation flags are necessary:
 ### CFLAGS = -Wno-unused-result
-CXXFLAGS = -std=c++11 -w #-Wall -Wextra
+CXXFLAGS = -std=c++11 #-Wall -Wextra
 ###
 ### ---- Linked libraries ----
 ### if your program needs additional libraries:

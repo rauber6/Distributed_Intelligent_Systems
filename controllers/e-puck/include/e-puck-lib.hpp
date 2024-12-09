@@ -45,8 +45,8 @@
 #define INVALID -999
 #define BREAK -999 // for physics plugin
 
-#define NUM_ROBOTS 2 // Change this also in the supervisor!
-#define NUM_TASKS 3 //10
+#define NUM_ROBOTS 1 // Change this also in the supervisor!
+// #define NUM_TASKS 3 //10 // FIXME this is delcared in message.h
 
 #define WB_CHANNEL_BROADCAST -1
 #define SUP_REC_BASE_CHANNEL 900
@@ -84,6 +84,7 @@ class Epuck
 {
 public:
     Epuck();
+    virtual ~Epuck() {}
 
     virtual void reset();
     void update_state(int _sum_distances);
@@ -120,6 +121,9 @@ protected:
     int indx;             // Event index to be sent to the supervisor
     int target_list_length;
 
+    WbDeviceTag left_motor;  // handler for left wheel of the robot
+    WbDeviceTag right_motor; // handler for the right wheel of the robot
+    
     // Proximity and radio handles
     WbDeviceTag emitter_tag, receiver_tag;
     WbDeviceTag ds[NB_SENSORS];  // Handle for the infrared distance sensors
@@ -128,14 +132,12 @@ protected:
 
     double stat_max_velocity;
 
-    WbDeviceTag left_motor;  // handler for left wheel of the robot
-    WbDeviceTag right_motor; // handler for the right wheel of the robot
-
 };
 
 class EpuckCentralized : public Epuck{
     public:
         EpuckCentralized(int plan_length = 0, bool task_timeout_off = false);
+        ~EpuckCentralized() override {}
     private:
         int plan_length;
         bool task_timeout_off; 
@@ -152,20 +154,24 @@ class EpuckCentralized : public Epuck{
 class EpuckDistributed : public Epuck{
     public:
         EpuckDistributed();
-        void reset();
+        ~EpuckDistributed() override {}
+        void reset() override;
 
     private:
 
         static constexpr double EMITTER_RANGE = 0.3; //[m]
 
-        float x[NUM_TASKS];  // tracks tasks (-1 not announced, 0 not assigned, >0 assigned with that bid)
-        float y_bids[NUM_TASKS];   // tracks local knowledge of the market (best bid on the market for each task)
-        int16_t y_winners[NUM_TASKS];  // tracks local knowledge of the market (winner for each task)
-        float h[NUM_TASKS];   // track personal valid tasks and thier corresponding bid (if =0 task not valid, otherwise this is bid)
+        int x[NUM_TASKS];  // tracks tasks (-1 not announced, 0 not assigned, >0 assigned with that bid)
+        int y_bids[NUM_TASKS];   // tracks local knowledge of the market (best bid on the market for each task)
+        int y_winners[NUM_TASKS];  // tracks local knowledge of the market (winner for each task)
+        int h[NUM_TASKS];   // track personal valid tasks and thier corresponding bid (if =0 task not valid, otherwise this is bid)
         task_t t[NUM_TASKS];  // keep info about all tasks
-        bool G[NUM_ROBOTS];  // adjacency vector
+        // bool G[NUM_ROBOTS];  // adjacency vector
 
-        int8_t assigned_task;
+        int assigned_task;
+        int newly_received_task;
+        int start_received_task;
+        bool can_start_broadcatsting;
 
         WbDeviceTag emitter_tag_sup;
 
@@ -176,9 +182,9 @@ class EpuckDistributed : public Epuck{
         void update_state_custom() override;
         void run_custom_pre_update() override;
         void run_custom_post_update() override;
-        float compare_bids(float bid1, float bid2);
-        bool is_my_bid_better(float myBid, float otherBid);
-        float compute_bid(task_t task);
+        int compare_bids(int bid1, int bid2);
+        int is_my_bid_better(int myBid, int otherBid);
+        int compute_bid(task_t task);
         bool is_assigned();
 };
 

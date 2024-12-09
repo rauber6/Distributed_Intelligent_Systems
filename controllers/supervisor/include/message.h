@@ -31,8 +31,8 @@ typedef struct {
   // ]]
   int event_index;
   int16_t sender_id;
-  float market_bids[NUM_TASKS];
-  int16_t market_winners[NUM_TASKS];
+  int market_bids[NUM_TASKS];
+  int market_winners[NUM_TASKS];
 } message_t;
 
 // A message sent from a robot to the supervisor

@@ -42,10 +42,10 @@ using namespace std;
 #define GPS_INTERVAL (500)
 
 // Parameters that can be changed
-#define NUM_ROBOTS 2              // Change this also in the epuck_crown.c!
+#define NUM_ROBOTS 1              // Change this also in the epuck_crown.c!
 #define NUM_EVENTS 3 //10               // number of total tasks //FIXME remove and use NUM_TASK in message.h
 #define TOTAL_EVENTS_TO_HANDLE 100   // Events after which simulation stops or...
-#define MAX_RUNTIME (3*60*1000)      // ...total runtime after which simulation stops
+#define MAX_RUNTIME (10*60*1000)      // ...total runtime after which simulation stops - 3
 
 #define WB_CHANNEL_BROADCAST -1
 #define SUPERVISOR_SENDER_ID 999
@@ -97,7 +97,7 @@ public:
     g_event_nodes_free.pop_back();
 
     taskType = generate_random_task();
-    cout << "Task " << strType(taskType) << " generate" << endl;
+    // cout << "Task " << strType(taskType) << " generate" << endl;
     
     double event_node_pos[3];           // Place event in arena
     event_node_pos[0] = pos_.x;

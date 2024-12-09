@@ -268,8 +268,17 @@ void Epuck::run(int ms)
     // Set the speed
     msl_w = msl*MAX_SPEED_WEB/1000;
     msr_w = msr*MAX_SPEED_WEB/1000;
+
     wb_motor_set_velocity(left_motor, msl_w);
     wb_motor_set_velocity(right_motor, msr_w);
+
+    if( (left_motor != 1) || (right_motor != 3)){
+        printf("[%d]R%d: Motor device tag %d(%p) - %d(%p)\n",clock, robot_id, left_motor, &left_motor, right_motor, &right_motor);
+        wb_motor_set_velocity(1, 0);
+        wb_motor_set_velocity(3, 0);
+        exit(1);
+    }
+    
     update_self_motion(msl, msr);
 
     // Update clock
@@ -283,6 +292,7 @@ void Epuck::receive_updates()
     int i;
     int k;
 
+    // printf("[%d]R%d: messages in queue %d\n",clock, robot_id, wb_receiver_get_queue_length(receiver_tag));
     while (wb_receiver_get_queue_length(receiver_tag) > 0) {
 
         const message_t *pmsg = (const message_t *) wb_receiver_get_data(receiver_tag);
