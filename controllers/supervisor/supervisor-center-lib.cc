@@ -1,4 +1,4 @@
-#include "include/supervisor-center-lib.hpp"
+#include "include/supervisor-lib.hpp"
 
   // Marks one event as done, if one of the robots is within the range
 void SupervisorCentralised::markEventsDone(event_queue_t& event_queue) {
