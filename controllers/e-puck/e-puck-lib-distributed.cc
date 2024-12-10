@@ -103,15 +103,17 @@ void EpuckDistributed::msgEventCustom(message_t msg){
 
         // === print market ===
         // FIXME to be removed
-        printf("\033[32m");
-        printf("[%d]R%d: neighbor %d is sharing its market \n", clock, robot_id, msg.sender_id);
-        printf("[%d]\tR%d: neigbors R%d market: [",clock, robot_id, msg.sender_id);
-        for(int i=0; i<NUM_TASKS;++i){
-            printf("%d: ", i);
-            printf("R%dB%d] - [", neighbor_market_winners[i], neighbor_market_bids[i]);
-        }    
-        printf("\n");
-        printf("\033[0m");
+        #if DEBUG
+            printf("\033[32m");
+            printf("[%d]R%d: neighbor %d is sharing its market \n", clock, robot_id, msg.sender_id);
+            printf("[%d]\tR%d: neigbors R%d market: [",clock, robot_id, msg.sender_id);
+            for(int i=0; i<NUM_TASKS;++i){
+                printf("%d: ", i);
+                printf("R%dB%d] - [", neighbor_market_winners[i], neighbor_market_bids[i]);
+            }    
+            printf("\n");
+            printf("\033[0m");
+        #endif
         // ====================
 
         for (int i = 0; i < NUM_TASKS; ++i) {

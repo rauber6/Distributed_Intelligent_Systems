@@ -31,7 +31,7 @@
 #define MAX_SPEED_WEB 6.28 // Maximum speed webots
 #define EVENT_RANGE (0.1) // also defined in supervisor-lib.hpp, to be cleaned up
 
-#define DEBUG 1
+#define DEBUG 0
 #define TIME_STEP 64 // Timestep (ms)
 #define RX_PERIOD 2  // time difference between two received elements (ms) (1000)
 
@@ -45,7 +45,7 @@
 #define INVALID -999
 #define BREAK -999 // for physics plugin
 
-#define NUM_ROBOTS 1 // Change this also in the supervisor!
+#define NUM_ROBOTS 5 // Change this also in the supervisor!
 // #define NUM_TASKS 3 //10 // FIXME this is delcared in message.h
 
 #define WB_CHANNEL_BROADCAST -1
@@ -159,6 +159,7 @@ class EpuckDistributed : public Epuck{
 
     private:
 
+        int64_t a[1000];
         static constexpr double EMITTER_RANGE = 0.3; //[m]
 
         int x[NUM_TASKS];  // tracks tasks (-1 not announced, 0 not assigned, >0 assigned with that bid)
