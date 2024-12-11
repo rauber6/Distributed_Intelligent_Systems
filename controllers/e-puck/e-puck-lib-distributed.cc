@@ -193,7 +193,6 @@ void EpuckDistributed::update_state_custom(){
             // ====================
             printf("\033[0m");
         #endif
-
     }
 
 }
@@ -302,7 +301,7 @@ void EpuckDistributed::run_custom_pre_update(){
             target_list_length = target_list_length+1;
 
             #if DEBUG
-                printf("[%d]R%d: task assigned %d with bid %d - market says [R%d:B%d]\n", clock, robot_id, assigned_task, x[assigned_task], y_winners[assigned_task], y_bids[assigned_task] );
+                printf("[%d]R%d: task assigned %d(id%d) with bid %d - market says [R%d:B%d]\n", clock, robot_id, assigned_task, int(target[0][2]), x[assigned_task], y_winners[assigned_task], y_bids[assigned_task] );
             #endif
         } else{
             #if DEBUG
@@ -346,6 +345,7 @@ void EpuckDistributed::run_custom_post_update(){
     {
         task_in_progress = 1;
         clock_task = clock;
+        time_active += clock - clock_goal;
         x[assigned_task] = -2;
         y_bids[assigned_task] = -2;
         // y_winners[assigned_task] = -2;
@@ -411,7 +411,7 @@ int EpuckDistributed::is_my_bid_better(int myBid, int otherBid){
         return -1: invalid bids
     */
 
-    if((myBid < 0) || (otherBid < 0))
+    if((myBid < 0) || (otherBid < 0)) // when does this become important ?
         return -1;
 
     return (myBid == compare_bids(myBid, otherBid)) ? 1 : 0;

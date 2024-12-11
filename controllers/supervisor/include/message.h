@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include "taskType.hpp"
 
-#define NUM_TASKS 3// 10
+#define NUM_TASKS 10
 
 // A message sent from the supervisor to the robot
 typedef enum {

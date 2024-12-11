@@ -88,9 +88,13 @@ void Epuck::reset()
 
 void Epuck::update_state(int _sum_distances)
 {          
-    if (time_active > BATTERY_LIFE){
+
+    if (time_active + target_valid*(clock - clock_goal) + task_in_progress*(clock - clock_task) > BATTERY_LIFE){
 
         if(state != OUT_OF_BATTERY){
+
+            time_active += target_valid*(clock - clock_goal) + task_in_progress*(clock - clock_task);
+            
             printf("Robot %d, OUT OF BATTERY, SHUT DOWN.\n", robot_id);
             printf("        Total active time: %ds.\n", (int)time_active/1000);
         }
@@ -121,7 +125,6 @@ void Epuck::update_state(int _sum_distances)
 
         // here add a new state TASK completed
         // then in each subclass in update_state_custom, do different things according to the subclass
-
         time_active += clock - clock_task;
 
         state = TASK_COMPLETED;

@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <iostream>
+#include <algorithm>
 
 #include <webots/robot.h>
 #include <webots/emitter.h>
@@ -173,7 +174,6 @@ class EpuckDistributed : public Epuck{
         int newly_received_task;
         int start_received_task;
         bool can_start_broadcatsting;
-
         WbDeviceTag emitter_tag_sup;
 
         void msgEventDone(message_t msg) override;
