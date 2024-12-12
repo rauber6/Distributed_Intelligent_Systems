@@ -39,6 +39,8 @@ void Epuck::reset()
     clock = 0;
     indx = 0;
 
+    // .
+
     // Init target positions to "INVALID"
     for (i = 0; i < 99; i++)
     {
