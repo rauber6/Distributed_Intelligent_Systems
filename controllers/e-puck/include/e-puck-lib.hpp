@@ -46,7 +46,7 @@
 #define INVALID -999
 #define BREAK -999 // for physics plugin
 
-#define NUM_ROBOTS 5 // Change this also in the supervisor!
+#define NUM_ROBOTS 2 // Change this also in the supervisor!
 // #define NUM_TASKS 3 //10 // FIXME this is delcared in message.h
 
 #define WB_CHANNEL_BROADCAST -1
@@ -155,7 +155,7 @@ class EpuckCentralized : public Epuck{
 class EpuckDistributed : public Epuck{
     public:
         EpuckDistributed();
-        ~EpuckDistributed() override {}
+        ~EpuckDistributed() override {};
         void reset() override;
 
     private:
@@ -189,6 +189,49 @@ class EpuckDistributed : public Epuck{
         bool is_assigned();
 };
 
+class EpuckDistributedPlan : public Epuck{
+    public:
+        EpuckDistributedPlan();
+        ~EpuckDistributedPlan() override {};
+        void reset() override;
+
+    private:
+
+        int64_t a[1000];
+        static constexpr double EMITTER_RANGE = 0.3; //[m]
+        
+        static constexpr int plan_length = 3;
+
+        int b_length = 0;
+        int b[NUM_TASKS]; // budle - order of tasks in plan based on time when they were added
+        int p[NUM_TASKS]; // order of tasks based on their location in the plan
+
+        int x[NUM_TASKS];  // tracks tasks (-1 not announced, 0 not assigned, >0 assigned with that bid)
+        int y_bids[NUM_TASKS];   // tracks local knowledge of the market (best bid on the market for each task)
+        int y_winners[NUM_TASKS];  // tracks local knowledge of the market (winner for each task)
+        int h[NUM_TASKS];   // track personal valid tasks and thier corresponding bid (if =0 task not valid, otherwise this is bid)
+        task_t t[NUM_TASKS];  // keep info about all tasks
+        // bool G[NUM_ROBOTS];  // adjacency vector
+
+        int assigned_task;
+        int newly_received_task;
+        int start_received_task;
+        bool can_start_broadcatsting;
+        WbDeviceTag emitter_tag_sup;
+
+        void msgEventDone(message_t msg) override;
+        void msgEventWon(message_t msg) override;
+        void msgEventNew(message_t msg) override;
+        void msgEventCustom(message_t msg) override;
+        void update_state_custom() override;
+        void run_custom_pre_update() override;
+        void run_custom_post_update() override;
+        int compare_bids(int bid1, int bid2);
+        int is_my_bid_better(int myBid, int otherBid);
+        int compute_bid(task_t task);
+        void compute_cumulative_bid(task_t task, int& bid, int& indx);
+        bool is_assigned();
+};
 
 double rnd(void);
 
