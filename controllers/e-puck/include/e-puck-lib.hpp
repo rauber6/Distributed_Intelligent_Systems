@@ -32,7 +32,7 @@
 #define MAX_SPEED_WEB 6.28 // Maximum speed webots
 #define EVENT_RANGE (0.1) // also defined in supervisor-lib.hpp, to be cleaned up
 
-#define DEBUG 0
+#define DEBUG 1
 #define TIME_STEP 64 // Timestep (ms)
 #define RX_PERIOD 2  // time difference between two received elements (ms) (1000)
 
@@ -199,7 +199,7 @@ class EpuckDistributedPlan : public Epuck{
 
         int64_t a[1000];
         static constexpr double EMITTER_RANGE = 0.3; //[m]
-        
+
         static constexpr int plan_length = 3;
 
         int b_length = 0;
@@ -228,8 +228,8 @@ class EpuckDistributedPlan : public Epuck{
         void run_custom_post_update() override;
         int compare_bids(int bid1, int bid2);
         int is_my_bid_better(int myBid, int otherBid);
-        int compute_bid(task_t task);
-        void compute_cumulative_bid(task_t task, int& bid, int& indx);
+        int compute_bid(task_t task, double expected_time);
+        double compute_cumulative_bid(int indx);
         bool is_assigned();
 };
 

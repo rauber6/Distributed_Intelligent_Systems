@@ -172,9 +172,9 @@ void EpuckDistributedPlan::update_state_custom()
         message_event_status_t my_task = {robot_id, uint16_t(target[0][2]), assigned_task, MSG_EVENT_DONE};
         int res = wb_emitter_send(emitter_tag_sup, &my_task, sizeof(message_event_status_t));
 
-#if DEBUG
-        int tmp = assigned_task;
-#endif
+        #if DEBUG
+                int tmp = assigned_task;
+        #endif
 
         // reset info about the completed task
         x[assigned_task] = -1;
@@ -185,8 +185,8 @@ void EpuckDistributedPlan::update_state_custom()
         {
             for (int i = 0; i < b_length - 1; ++i)
             {
-                p[i] = p[i+1];
-                b[i] = b[i+1];
+                p[i] = p[i + 1];
+                b[i] = b[i + 1];
             }
             assigned_task = p[0];
         }
@@ -264,20 +264,19 @@ void EpuckDistributedPlan::run_custom_pre_update()
 
     while (b_length < plan_length)
     {
+        printf("robot id%d b_length: %d\n", robot_id, b_length);
         // robot's plan isn't complete
         // add the most promising task to the bundle
+
+        double expected_time = compute_cumulative_bid(b_length);
 
         std::fill(std::begin(h), std::end(h), 0);
         for (int i = 0; i < NUM_TASKS; ++i)
         {
-
             if (x[i] != 0)
                 continue; // task not valid
 
-            int bid = 0;
-            int indx = 0;
-
-            compute_cumulative_bid(t[i], bid, indx);
+            int bid = compute_bid(t[i], expected_time);
             int res = is_my_bid_better(bid, y_bids[i]);
             if (res == 1)
             {
@@ -294,19 +293,6 @@ void EpuckDistributedPlan::run_custom_pre_update()
 #endif
                 h[i] = 0;
             }
-            if (h[i] > 0)
-            { // my bid is better than the market so I will insert the task in the plan
-
-                for (int j = b_length; j >= indx; j--)
-                {
-                    p[j + 1] = p[j];
-                }
-                p[indx] = i;
-                b[b_length++] = i;
-                x[i] = bid;
-                y_bids[i] = bid;
-                y_winners[i] = robot_id;
-            }
             if ((x[i] < 0) || (h[i] < 0))
             { // sanity check
                 printf("\033[31mError bid < 0\033[0m\n");
@@ -314,13 +300,32 @@ void EpuckDistributedPlan::run_custom_pre_update()
             }
             // printf("Robot id%d, bid: %d, h[i]:%d\n", robot_id, b, h[i]);
         }
-        break;
+        // extract max valid bid
+        auto max_bid = std::max_element(std::begin(h), std::end(h));
+        int max_index = std::distance(std::begin(h), max_bid);
+
+#if DEBUG
+        printf("\033[36m");
+#endif
+        if (*max_bid > 0)
+        { // f there is at least one valid task
+            // auto-assign bid
+            p[b_length] = max_index;
+            b[b_length] = max_index;
+            x[max_index] = *max_bid;
+            y_bids[max_index] = *max_bid;
+            y_winners[max_index] = robot_id;
+            b_length++;
+        }
+        else{
+            break;
+        }
     }
 
 #if DEBUG
     printf("\033[36m");
 #endif
-    if (b_length > 0)
+    if (!is_assigned() && (b_length >0))
     { // f there is at least one valid task
         // assing the first task in the plan
         assigned_task = p[0];
@@ -334,46 +339,58 @@ void EpuckDistributedPlan::run_custom_pre_update()
 
         // printf("Robot id%d, target_list_length %d \n", robot_id, target_list_length);
 
-#if DEBUG
+        
+        #if DEBUG
         printf("[%d]R%d: task assigned %d(id%d) with bid %d - market says [R%d:B%d]\n", clock, robot_id, assigned_task, int(target[0][2]), x[assigned_task], y_winners[assigned_task], y_bids[assigned_task]);
-#endif
+            // === print x ===
+            printf("[%d]\tR%d: x: [", clock, robot_id);
+            for (int i = 0; i < NUM_TASKS; ++i)
+            {
+                printf("%d: ", i);
+                printf("%d] - [", x[i]);
+            }
+            printf("\n");
+            // ====================
+            // === print h ===
+            printf("[%d]\tR%d: h: [", clock, robot_id);
+            for (int i = 0; i < NUM_TASKS; ++i)
+            {
+                printf("%d: ", i);
+                printf("%d] - [", h[i]);
+            }
+            printf("\n");
+            // ====================
+            // === print market ===
+            printf("[%d]\tR%d: my market: [", clock, robot_id);
+            for (int i = 0; i < NUM_TASKS; ++i)
+            {
+                printf("%d: ", i);
+                printf("R%dB%d] - [", y_winners[i], y_bids[i]);
+            }
+            printf("\n");
+            // ====================
+            // === print market ===
+            printf("[%d]\tR%d: my b: [", clock, robot_id);
+            for (int i = 0; i < b_length; ++i)
+            {
+                printf("%d: ", i);
+                printf("%d] - [", b[i]);
+            }
+            printf("\n");
+            // ====================
+            // === print market ===
+            printf("[%d]\tR%d: my p: [", clock, robot_id);
+            for (int i = 0; i < b_length; ++i)
+            {
+                printf("%d: ", i);
+                printf("%d] - [", p[i]);
+            }
+            printf("\n");
+            // ====================
+            printf("\033[0m");
+        #endif
     }
-    else
-    {
-#if DEBUG
-        printf("[%d]R%d: didn't find a task\n", clock, robot_id);
-#endif
-    }
-#if DEBUG
-    // === print x ===
-    printf("[%d]\tR%d: x: [", clock, robot_id);
-    for (int i = 0; i < NUM_TASKS; ++i)
-    {
-        printf("%d: ", i);
-        printf("%d] - [", x[i]);
-    }
-    printf("\n");
-    // ====================
-    // === print h ===
-    printf("[%d]\tR%d: h: [", clock, robot_id);
-    for (int i = 0; i < NUM_TASKS; ++i)
-    {
-        printf("%d: ", i);
-        printf("%d] - [", h[i]);
-    }
-    printf("\n");
-    // ====================
-    // === print market ===
-    printf("[%d]\tR%d: my market: [", clock, robot_id);
-    for (int i = 0; i < NUM_TASKS; ++i)
-    {
-        printf("%d: ", i);
-        printf("R%dB%d] - [", y_winners[i], y_bids[i]);
-    }
-    printf("\n");
-    // ====================
-    printf("\033[0m");
-#endif
+
 }
 
 void EpuckDistributedPlan::run_custom_post_update()
@@ -459,13 +476,13 @@ int EpuckDistributedPlan::is_my_bid_better(int myBid, int otherBid)
     return (myBid == compare_bids(myBid, otherBid)) ? 1 : 0;
 }
 
-int EpuckDistributedPlan::compute_bid(task_t task)
+int EpuckDistributedPlan::compute_bid(task_t task, double expected_time)
 {
     // printf("R%d: my pos %.2f %.2f - task pos: %.2f %.2f\n", robot_id, my_pos[0], my_pos[1], task.posX, task.posY);
     float d = dist(task.posX, task.posY, my_pos[0], my_pos[1]);
     float t = get_task_time(robot_type, task.type);
 
-    int bid = std::floor(1 / (d / 0.5 + t) * 1000); // 0.5 is epuck max velocity
+    int bid = std::floor(1 / (d / 0.5 + t + expected_time) * 1000); // 0.5 is epuck max velocity
     // printf("R%d: bid %.2f\n", robot_id, bid);
 
     if (bid < 0)
@@ -477,14 +494,13 @@ int EpuckDistributedPlan::compute_bid(task_t task)
     return bid;
 }
 
-void EpuckDistributedPlan::compute_cumulative_bid(task_t task, int &bid, int &indx)
+double EpuckDistributedPlan::compute_cumulative_bid(int indx)
 {
     printf("Compute cumulative bid\n");
+    if (indx == 0)
+        return 0.0;
 
-    indx = 0;
-    double inserted_d = dist(my_pos[0], my_pos[1], task.posX, task.posY) + dist(target[0][0], target[0][1], task.posX, task.posY);
-    double prev_d = dist(target[0][0], target[0][1], my_pos[0], my_pos[1]);
-    double d = inserted_d - prev_d;
+    double d = dist(my_pos[0], my_pos[1], t[p[0]].posX, t[p[0]].posY);
 
     double *time_to = new double[b_length]();
     double *distance_to = new double[b_length]();
@@ -496,28 +512,19 @@ void EpuckDistributedPlan::compute_cumulative_bid(task_t task, int &bid, int &in
         distance_to[i] = 0;
     }
 
-    if (b_length > 0)
+    // for all the tasks inside the task list (i.e. target[i] where i goes up to target_list_length)  check if putting the current
+    // event (located at (msg.event_x, msg.event_z)) in between two task results in  a smaller distance, and modify the d accordingly.
+    
+    for (int i = 1; i < indx; i++)
     {
-        indx = 1;
-        // for all the tasks inside the task list (i.e. target[i] where i goes up to target_list_length)  check if putting the current
-        // event (located at (msg.event_x, msg.event_z)) in between two task results in  a smaller distance, and modify the d accordingly.
-        for (int i = 1; i < b_length; i++)
-        {
-            inserted_d = dist(t[p[i - 1]].posX, t[p[i - 1]].posY, my_pos[0], my_pos[1]) + dist(t[p[i]].posX, t[p[i]].posY, my_pos[0], my_pos[1]);
-            prev_d = dist(t[p[i - 1]].posX, t[p[i - 1]].posY, t[p[i]].posX, t[p[i]].posY);
-            if (inserted_d - prev_d < d)
-            {
-                d = inserted_d - prev_d;
-                indx = i;
-            }
-            time_to[i] = time_to[i - 1] + get_task_time(robot_type, t[p[i]].type);
-            distance_to[i] = prev_d;
-        }
+        time_to[i] = time_to[i - 1] + get_task_time(robot_type, t[p[i]].type);
+        distance_to[i] = distance_to[i - 1] + dist(t[p[i - 1]].posX, t[p[i - 1]].posY, t[p[i]].posX, t[p[i]].posY);
     }
+    
     float dist = (distance_to[indx] + d);
-    float time = get_task_time(robot_type, task.type) + time_to[indx];
+    float time = get_task_time(robot_type, t[p[0]].type) + time_to[indx];
 
-    bid = std::floor(1 / (dist / 0.5 + time) * 1000); // 0.5 is epuck max velocity
+    // bid = std::floor(1 / (dist / 0.5 + time) * 1000); // 0.5 is epuck max velocity
 
     // printf("    Robot id%d bid %d\n", robot_id, bid);
     // printf("        dist: %f, d: %f, t: %f\n", dist, d, time);
@@ -526,11 +533,7 @@ void EpuckDistributedPlan::compute_cumulative_bid(task_t task, int &bid, int &in
     delete[] time_to;
     delete[] distance_to;
 
-    if (bid < 0)
-    {
-        printf("\033[31mError bid < 0\033[0m\n");
-        exit(1);
-    }
+    return dist / 0.5 + time;
 }
 
 bool EpuckDistributedPlan::is_assigned()
