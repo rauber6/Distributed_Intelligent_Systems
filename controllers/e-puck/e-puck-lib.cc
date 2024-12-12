@@ -144,20 +144,20 @@ void Epuck::update_self_motion(int msl, int msr) {
 
 void Epuck::compute_avoid_obstacle(int *msl, int *msr, int distances[]) 
 {
-    double left_weights[8] = {-2.0, -0.75, -0.2, 0, 0, 0.2, 0.75, 2.0};
-    double right_weights[8] = {2.0, 0.75, 0.2, 0, 0, -0.2, -0.75, -2.0};
+    double left_weights[8] = {-72, -58, -36, 8, 10, 36, 28, 18};
+    double right_weights[8] = {17, 29, 34, 10, 8, -38, -56, -76};
     int left_adjustment = 0;
     int right_adjustment = 0;
-    int adjustment = 1; 
+    int adjustment_factor = 20; 
 
     for (int sensor_nb = 0; sensor_nb < 8; ++sensor_nb) {
-        left_adjustment += distances[sensor_nb] * left_weights[sensor_nb] * 50;
-        right_adjustment += distances[sensor_nb] * right_weights[sensor_nb] * 50;
+        left_adjustment += distances[sensor_nb] * left_weights[sensor_nb];
+        right_adjustment += distances[sensor_nb] * right_weights[sensor_nb];
     }
 
     // Normalize adjustments and calculate motor speeds
-    *msl = BIAS_SPEED + (left_adjustment / adjustment);   // Scale down adjustments
-    *msr = BIAS_SPEED + (right_adjustment / adjustment); // Scale down adjustments
+    *msl = BIAS_SPEED + (left_adjustment / adjustment_factor);   // Scale down adjustments
+    *msr = BIAS_SPEED + (right_adjustment / adjustment_factor); // Scale down adjustments
 
     // Clamp motor speeds to the maximum allowable range
     *msl = std::min(std::max(*msl, -MAX_SPEED), MAX_SPEED);
