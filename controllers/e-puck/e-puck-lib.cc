@@ -223,17 +223,18 @@ void Epuck::run(int ms)
         distances[sensor_nb] = wb_distance_sensor_get_value(ds[sensor_nb]);
         sum_distances += distances[sensor_nb];
     }
+    if(state != OUT_OF_BATTERY){
+        // Get info from supervisor
+        receive_updates();
 
-    // Get info from supervisor
-    receive_updates();
+        run_custom_pre_update();
 
-    run_custom_pre_update();
+        // State may change because of obstacles
+        update_state(sum_distances);
 
-    // State may change because of obstacles
-    update_state(sum_distances);
-
-    // Custom instruction
-    run_custom_post_update();
+        // Custom instruction
+        run_custom_post_update();
+    }
 
     // Set wheel speeds depending on state
     switch (state) {
