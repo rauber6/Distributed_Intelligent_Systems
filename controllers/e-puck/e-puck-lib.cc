@@ -10,10 +10,12 @@ Epuck::Epuck() {
     task_in_progress = 0;
     target_valid = 0;
     target_list_length = 0;
+    time_active = 0;
 };
 
 void Epuck::reset()
 {
+    // printf("Epuck reset parent\n");
     wb_robot_init();
     int i;
 
@@ -78,19 +80,42 @@ void Epuck::reset()
 
     // Reset stats
     stat_max_velocity = 0.0;
+
+    wb_motor_set_velocity(left_motor, 0);
+    wb_motor_set_velocity(right_motor, 0);
+    
 }
-void Epuck::update_state(int _sum_distances, int _max_distance)  
-{   
-    if ((_sum_distances > STATECHANGE_SUM || _max_distance > STATECHANGE_MAX) && (state == GO_TO_GOAL || state == OBSTACLE_AVOID))
+
+
+void Epuck::update_state(int _sum_distances, int _max_distance)
+{          
+
+    if (time_active + target_valid*(clock - clock_goal) + task_in_progress*(clock - clock_task) > BATTERY_LIFE){
+
+        if(state != OUT_OF_BATTERY){
+
+            time_active += target_valid*(clock - clock_goal) + task_in_progress*(clock - clock_task);
+            
+            printf("Robot %d, OUT OF BATTERY, SHUT DOWN.\n", robot_id);
+            printf("        Total active time: %ds.\n", (int)time_active/1000);
+        }
+        
+        state = OUT_OF_BATTERY;
+    }
+    else if ((_sum_distances > STATECHANGE_SUM || _max_distance > STATECHANGE_MAX) && (state == GO_TO_GOAL || state == OBSTACLE_AVOID))
     {
         state = OBSTACLE_AVOID;
     }
-    else if(target_valid && task_in_progress && state != PERFORMING_TASK)
+    else if(target_valid && task_in_progress && state != PERFORMING_TASK) // target_valid setting to fix//target_valid setting to fix
     {
+        time_active += clock - clock_goal;
         state = PERFORMING_TASK;
     }
     else if (target_valid && state != PERFORMING_TASK)
     {
+        if(state != GO_TO_GOAL && state != OBSTACLE_AVOID){ //start the clock only the first time it enters go to goal
+            clock_goal = clock;
+        }
         state = GO_TO_GOAL;
     }
     else if(state != PERFORMING_TASK)
@@ -98,12 +123,11 @@ void Epuck::update_state(int _sum_distances, int _max_distance)
         state = DEFAULT_STATE;
     }
     else if(state == PERFORMING_TASK && (clock - clock_task) >= (get_task_time(robot_type, TaskType(target[0][3]))*1000)){
-        state = OBSTACLE_AVOID;
-        task_in_progress = 0;
+        // here add a new state TASK completed
+        // then in each subclass in update_state_custom, do different things according to the subclass
+        time_active += clock - clock_task;
 
-        const message_event_status_t my_task = {robot_id, uint16_t(target[0][2]), MSG_EVENT_DONE};
-        wb_emitter_set_channel(emitter_tag, robot_id+1);
-        wb_emitter_send(emitter_tag, &my_task, sizeof(message_event_status_t));  
+        state = TASK_COMPLETED;
     }
 
     update_state_custom();
@@ -214,16 +238,19 @@ void Epuck::run(int ms)
         sum_distances += distances[sensor_nb];
     }
     
-    // Get info from supervisor
-    receive_updates();
 
-    run_custom_pre_update();
+    if(state != OUT_OF_BATTERY){
+        // Get info from supervisor
+        receive_updates();
 
-    // State may change because of obstacles
-    update_state(sum_distances, max_distance);
+        run_custom_pre_update();
 
-    // Custom instruction
-    run_custom_post_update();
+        // State may change because of obstacles
+        update_state(sum_distances);
+
+        // Custom instruction
+        run_custom_post_update();
+    }
 
     // Set wheel speeds depending on state
     switch (state) {
@@ -250,6 +277,10 @@ void Epuck::run(int ms)
             msr = 0;
             break;
 
+        case OUT_OF_BATTERY:
+            msl = 0;
+            msr = 0;
+            break;
 
         default:
             printf("Invalid state: robot_id %d \n", robot_id);
@@ -257,8 +288,17 @@ void Epuck::run(int ms)
     // Set the speed
     msl_w = msl*MAX_SPEED_WEB/1000;
     msr_w = msr*MAX_SPEED_WEB/1000;
+
     wb_motor_set_velocity(left_motor, msl_w);
     wb_motor_set_velocity(right_motor, msr_w);
+
+    if( (left_motor != 1) || (right_motor != 3)){
+        printf("[%d]R%d: Motor device tag %d(%p) - %d(%p)\n",clock, robot_id, left_motor, &left_motor, right_motor, &right_motor);
+        wb_motor_set_velocity(1, 0);
+        wb_motor_set_velocity(3, 0);
+        exit(1);
+    }
+    
     update_self_motion(msl, msr);
 
     // Update clock
@@ -272,17 +312,21 @@ void Epuck::receive_updates()
     int i;
     int k;
 
+    // printf("[%d]R%d: messages in queue %d\n",clock, robot_id, wb_receiver_get_queue_length(receiver_tag));
     while (wb_receiver_get_queue_length(receiver_tag) > 0) {
+
         const message_t *pmsg = (const message_t *) wb_receiver_get_data(receiver_tag);
         
         // save a copy, cause wb_receiver_next_packet invalidates the pointer
         memcpy(&msg, pmsg, sizeof(message_t));
         wb_receiver_next_packet(receiver_tag);
 
+        if(msg.sender_id == robot_id)
+            continue;
         // double check this message is for me
         // communication should be on specific channel per robot
         // channel = robot_id + 1, channel 0 reserved for physics plguin
-        if(msg.robot_id != robot_id) {
+        if((msg.robot_id != (int16_t)robot_id) && (msg.robot_id != -1)) {
             fprintf(stderr, "Invalid message: robot_id %d "  "doesn't match receiver %d\n", msg.robot_id, robot_id);
             //return;
             exit(1);
@@ -298,7 +342,7 @@ void Epuck::receive_updates()
         
         // Event state machine
         if(msg.event_state == MSG_EVENT_GPS_ONLY)
-        {
+        { 
             my_pos[0] = msg.robot_x;
             my_pos[1] = msg.robot_y;
             my_pos[2] = msg.heading;
@@ -311,21 +355,6 @@ void Epuck::receive_updates()
             wb_motor_set_velocity(right_motor, 0);
             wb_robot_step(TIME_STEP);
             exit(0);
-        }
-        else if(msg.event_state == MSG_EVENT_REACHED && !task_in_progress)
-        {
-    
-            if((int)target[0][2] != msg.event_id)
-            {
-                const message_event_status_t my_task = {robot_id, msg.event_id, MSG_EVENT_NOT_IN_PROGRESS};
-                wb_emitter_set_channel(emitter_tag, robot_id+1);
-                wb_emitter_send(emitter_tag, &my_task, sizeof(message_event_status_t)); 
-            } 
-            else {
-                task_in_progress = 1;
-                clock_task = clock;
-            }
-
         }
         else if(msg.event_state == MSG_EVENT_DONE)
          {
@@ -340,10 +369,10 @@ void Epuck::receive_updates()
         {     
             msgEventNew(msg);
         }
+        else{
+            msgEventCustom(msg);
+        }
     }
-
-    msgEventCustom(msg);
-
 
     // Communication with physics plugin (channel 0)            
     i = 0; k = 1;
@@ -375,7 +404,18 @@ void Epuck::receive_updates()
     }
 }
 
+bool Epuck::check_if_event_reached()
+{
+    // if distance between event assigned to the robot and the robot is smaller than EVENT_RANGE
+    // then event is reached
+    // used for distributed controllers
 
+    if(dist(my_pos[0], my_pos[1], target[0][0], target[0][1]) < EVENT_RANGE)
+    {
+        return true;
+    }
+    else return false;
+}
 
 double rnd(void) {
   return ((double)rand())/((double)RAND_MAX);

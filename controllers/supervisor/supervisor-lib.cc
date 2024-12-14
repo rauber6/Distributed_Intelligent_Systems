@@ -29,6 +29,7 @@ double expovariate(double mu) { //to delete?
 }
 
 void Supervisor::addEvent() {
+    // printf("Parent event\n");
     events_.push_back(unique_ptr<Event>(new Event(next_event_id_++))); // add to list
     assert(num_active_events_ < NUM_EVENTS); // check max. active events not reached
     num_active_events_++;
@@ -62,22 +63,25 @@ void Supervisor::linkRobot(uint16_t id) {
   }
 
   // Assemble a new message to be sent to robots
-void Supervisor::buildMessage(uint16_t robot_id, const Event* event,
+void Supervisor::buildMessage(int16_t robot_id, const Event* event,
       message_event_state_t event_state, message_t* msg) {
-    WbFieldRef f_rot = wb_supervisor_node_get_field(robots_[robot_id],
-                                                    "rotation");
-    const double *pos = getRobotPos(robot_id);
-    const double *rot = wb_supervisor_field_get_sf_rotation(f_rot);
+        msg->robot_id = robot_id;
+        msg->sender_id = SUPERVISOR_SENDER_ID;  // for supervisor
+        if(robot_id >= 0){
+          WbFieldRef f_rot = wb_supervisor_node_get_field(robots_[robot_id],
+                                                          "rotation");
+          const double *pos = getRobotPos(robot_id);
+          const double *rot = wb_supervisor_field_get_sf_rotation(f_rot);
 
-    msg->robot_id = robot_id;
-    msg->robot_x = pos[0]; // no gps noise used here
-    msg->robot_y = pos[1]; // no gps noise used here
-    double heading = -rot[2] *rot[3]; // no gps noise used here
-    msg->heading = heading > 2*M_PI ? heading - 2*M_PI : heading;
-    msg->event_state = event_state;
-    msg->event_id = -1;
-    msg->event_x = 0.0;
-    msg->event_y = 0.0;
+          msg->robot_x = pos[0]; // no gps noise used here
+          msg->robot_y = pos[1]; // no gps noise used here
+          double heading = -rot[2] *rot[3]; // no gps noise used here
+          msg->heading = heading > 2*M_PI ? heading - 2*M_PI : heading;
+        }
+        msg->event_state = event_state;
+        msg->event_id = -1;
+        msg->event_x = 0.0;
+        msg->event_y = 0.0;
     
 
     if (event) {
@@ -154,6 +158,7 @@ void Supervisor::statTotalCollisions()
 
   // Reset robots & events
 void Supervisor::reset() {
+    // printf("supervisor reset in parent\n");
     clock_ = 0;
 
     // initialize & link events

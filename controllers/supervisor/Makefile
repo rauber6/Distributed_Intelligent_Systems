@@ -39,12 +39,12 @@
 ###
 ### ---- C++ Sources ----
 ### if your program uses several C++ source files:
-CXX_SOURCES = supervisor.cc taskType.cc supervisor-lib.cc supervisor-center-lib.cc
+CXX_SOURCES = supervisor.cc taskType.cc supervisor-lib.cc supervisor-center-lib.cc supervisor-lib-distributed.cc
 ###
 ### ---- Compilation options ----
 ### if special compilation flags are necessary:
 ### CFLAGS = -Wno-unused-result
-CFLAGS = -w  # compile without warnings
+CXXFLAGS = -std=c++11 #-Wall -Wextra
 ###
 ### ---- Linked libraries ----
 ### if your program needs additional libraries:

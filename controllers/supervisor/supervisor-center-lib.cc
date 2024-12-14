@@ -1,4 +1,4 @@
-#include "include/supervisor-center-lib.hpp"
+#include "include/supervisor-lib.hpp"
 
   // Marks one event as done, if one of the robots is within the range
 void SupervisorCentralised::markEventsDone(event_queue_t& event_queue) {
@@ -124,12 +124,7 @@ bool SupervisorCentralised::step(uint64_t step_size) {
         else if(wb_receiver_get_data_size(receivers_[i]) == sizeof(message_event_status_t)){
           pmsg = (message_event_status_t*) wb_receiver_get_data(receivers_[i]); 
           assert(pmsg->robot_id == i);
-          // std::cout << "VAL " << pmsg->event_id << std::endl;
-          // std::cout << "VAL " << i << std::endl;
-          // std::cout << "VAL " << events_.at(pmsg->event_id).get()->id_ << std::endl;
           Event* event = events_.at(pmsg->event_id).get();
-          // std::cout << "val" << event->id_ << std::endl;
-          // std::cout << "2" << std::endl;
           assert(event->in_progress_);
           // return 1;
           message_event_state_t state = pmsg->event_state;
@@ -182,10 +177,7 @@ bool SupervisorCentralised::step(uint64_t step_size) {
 
         buildMessage(i, event, event_state, &msg);
         while (wb_emitter_get_channel(emitter_) != i+1)
-              wb_emitter_set_channel(emitter_, i+1);        
-//        printf("> Sent message to robot %d // event_state=%d\n", i, event_state);
-//        printf("sending message event %d , robot %d , emitter %d, channel %d\n",msg.event_id,msg.robot_id,emitter_,      wb_emitter_get_channel(emitter_));
-        
+              wb_emitter_set_channel(emitter_, i+1);              
         wb_emitter_send(emitter_, &msg, sizeof(message_t));
       }
     }
