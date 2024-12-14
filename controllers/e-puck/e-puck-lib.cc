@@ -246,7 +246,7 @@ void Epuck::run(int ms)
         run_custom_pre_update();
 
         // State may change because of obstacles
-        update_state(sum_distances);
+        update_state(sum_distances, max_distance);
 
         // Custom instruction
         run_custom_post_update();
