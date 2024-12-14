@@ -42,10 +42,12 @@ using namespace std;
 #define GPS_INTERVAL (500)
 
 // Parameters that can be changed
-#define NUM_ROBOTS 4                // Change this also in the epuck_crown.c
+#define NUM_ROBOTS 5               // Change this also in the epuck_crown.c
 #define NUM_EVENTS 10               // number of total tasks //FIXME remove and use NUM_TASK in message.h
 #define TOTAL_EVENTS_TO_HANDLE 100   // Events after which simulation stops or...
 #define MAX_RUNTIME (3*60*1000)      // ...total runtime after which simulation stops - 3
+#define COLLISION_RANGE (0.01)
+#define ROBOT_DIAMETER (0.07)
 
 #define WB_CHANNEL_BROADCAST -1
 #define SUPERVISOR_SENDER_ID 999
@@ -197,6 +199,10 @@ protected:
   uint16_t num_events_handled_; // total number of events handled
   double stat_total_distance_;  // total distance traveled
   double stat_robot_prev_pos_[NUM_ROBOTS][2];
+  double distanceBetweenRobots(uint16_t, uint16_t);
+  void statTotalCollisions();
+  uint16_t ongoing_collisions_[NUM_ROBOTS][NUM_ROBOTS] = {};
+  uint16_t stat_total_collisions_ = 0;
 
   WbNodeRef robots_[NUM_ROBOTS];
   WbDeviceTag emitter_;
