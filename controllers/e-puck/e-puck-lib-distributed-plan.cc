@@ -287,7 +287,7 @@ void EpuckDistributedPlan::run_custom_pre_update()
         // x[assigned_task] = y_bids[assigned_task];
         // assigned_task = -1;
         // target_list_length -= 1;
-        // make_plan_valid();
+        make_plan_valid();
     }
     else if (is_assigned() && (is_my_bid_better(x[assigned_task], y_bids[assigned_task]) == 0) && (y_winners[assigned_task] != robot_id))
     {
@@ -602,14 +602,17 @@ bool EpuckDistributedPlan::is_assigned()
 void EpuckDistributedPlan::make_plan_valid()
 {   printf("make plan valid...........................................\n");
     int *invalid = new int[b_length]();
+    int invalid_no = 0;
     for(int i = 0; i < b_length; ++i)
     {
         if(y_bids[p[i]] < 0)
         {
             invalid[i] = 1;
+            invalid_no ++;
         }
     }
     int og_length = b_length;
+    if(invalid_no == 0) return;
     for(int i = 0; i < og_length; ++i){
         if(invalid[i] == 1)
         {
@@ -626,9 +629,12 @@ void EpuckDistributedPlan::make_plan_valid()
             b_length--;
         }
     }
-    printf("Robot id%d original plan length %d, current plan length %d\n", robot_id, og_length, b_length);
+    if(og_length != b_length)
+        printf("Robot id%d original plan length %d, current plan length %d\n", robot_id, og_length, b_length);
+
     if(b_length > 0) assigned_task = p[0];
     else assigned_task = -1;
+
     delete[] invalid;
 
 }
