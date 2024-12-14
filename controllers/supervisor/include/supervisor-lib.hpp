@@ -42,10 +42,17 @@ using namespace std;
 #define GPS_INTERVAL (500)
 
 // Parameters that can be changed
-#define NUM_ROBOTS 5              // Change this also in the epuck_crown.c!
-#define NUM_EVENTS 10               // number of total tasks
+#define NUM_ROBOTS 4                // Change this also in the epuck_crown.c
+#define NUM_EVENTS 10               // number of total tasks //FIXME remove and use NUM_TASK in message.h
 #define TOTAL_EVENTS_TO_HANDLE 100   // Events after which simulation stops or...
-#define MAX_RUNTIME (3*60*1000)      // ...total runtime after which simulation stops
+#define MAX_RUNTIME (3*60*1000)      // ...total runtime after which simulation stops - 3
+
+#define WB_CHANNEL_BROADCAST -1
+#define SUPERVISOR_SENDER_ID 999
+
+#define SUP_REC_BASE_CHANNEL 900
+#define RX_PERIOD 2  // time difference between two received elements (ms) (1000)
+
 
 extern WbNodeRef g_event_nodes[NUM_EVENTS];
 extern vector<WbNodeRef> g_event_nodes_free;
@@ -60,11 +67,12 @@ class Event {
 
 // Public variables
 public:
-  uint16_t id_;          //event id
+  uint16_t id_;          //event id - unique
   Point2d pos_;          //event pos
   WbNodeRef node_;       //event node ref
   uint16_t assigned_to_; //id of the robot that will handle this event
 
+  uint8_t event_index;   //index in [0, NUM_EVENT -1]
   TaskType taskType;
 
   // Auction data
@@ -89,7 +97,7 @@ public:
     g_event_nodes_free.pop_back();
 
     taskType = generate_random_task();
-    cout << "Task " << strType(taskType) << " generate" << endl;
+    // cout << "Task " << strType(taskType) << " generate" << endl;
     
     double event_node_pos[3];           // Place event in arena
     event_node_pos[0] = pos_.x;
@@ -124,6 +132,10 @@ public:
         }
       }
     }
+  }
+  
+  Event(uint16_t id, uint8_t index) : Event(id) {
+    event_index = index;
   }
 
   bool is_assigned() const { return assigned_to_ != (uint16_t) -1; }
@@ -191,10 +203,10 @@ protected:
   WbDeviceTag receivers_[NUM_ROBOTS];
   typedef vector<pair<Event*, message_event_state_t> > event_queue_t;
 
-  void addEvent();
+  virtual void addEvent();
   void linkRobot(uint16_t id);
     // Assemble a new message to be sent to robots
-  void buildMessage(uint16_t robot_id, const Event* event,
+  void buildMessage(int16_t robot_id, const Event* event,
       message_event_state_t event_state, message_t* msg);
   const double* getRobotPos(uint16_t robot_id);
   void setRobotPos(uint16_t robot_id, double x, double y);
@@ -203,9 +215,45 @@ protected:
 
 public:
   Supervisor() : events_(NUM_EVENTS){};
-  void reset();
-  virtual bool step(uint64_t step_size) {};
+  virtual ~Supervisor(){}
+  virtual void reset();
+  virtual bool step(uint64_t step_size) = 0;
 
 };
 
 void link_event_nodes();
+
+
+
+class SupervisorCentralised : public Supervisor{
+    private:
+        Event* auction; // the event currently being auctioned
+        void markEventsDone(event_queue_t& event_queue);
+        void markEventsReached(event_queue_t& event_queue);
+        void handleAuctionEvents(event_queue_t& event_queue);
+    public:
+        SupervisorCentralised():Supervisor(){} 
+        ~SupervisorCentralised() override {}
+        void reset() override;
+        bool step(uint64_t step_size) override;
+};
+
+
+
+
+class SupervisorDistributed : public Supervisor {
+  public:
+    SupervisorDistributed();
+    ~SupervisorDistributed() override {}
+    void reset() override;
+    bool step(uint64_t step_size) override;
+
+  private:
+    std::vector<Event> active_events_;
+    void addEvent() override;
+    void addEvent(int8_t index);
+    void buildMessage(int16_t robot_id, const Event* event, message_event_state_t event_state, message_t* msg);
+
+    void markEventsReached(event_queue_t& event_queue);
+
+};
