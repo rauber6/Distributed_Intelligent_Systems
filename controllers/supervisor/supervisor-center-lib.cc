@@ -11,8 +11,7 @@ void SupervisorCentralised::markEventsDone(event_queue_t& event_queue) {
       double dist = event->pos_.Distance(robot_pos_pt);
 
       if (dist <= EVENT_RANGE) {
-        printf("D robot %d reached event %d\n", event->assigned_to_,
-          event->id_);
+        //printf("D robot %d reached event %d\n", event->assigned_to_, event->id_);
         num_events_handled_++;
         event->markDone(clock_);
         num_active_events_--;
@@ -31,8 +30,7 @@ void SupervisorCentralised::markEventsReached(event_queue_t& event_queue) {
       double dist = event->pos_.Distance(robot_pos_pt);
 
       if (dist <= EVENT_RANGE && !event->reached_  && event->in_progress_) { // 
-        printf("D robot %d reached event %d\n", event->assigned_to_,
-          event->id_);
+        //printf("D robot %d reached event %d\n", event->assigned_to_, event->id_);
         event->reached_ = 1;
         event_queue.emplace_back(event.get(), MSG_EVENT_REACHED);
       }
@@ -50,7 +48,7 @@ void SupervisorCentralised::handleAuctionEvents(event_queue_t& event_queue) {
         event->t_announced_ = clock_;
         event_queue.emplace_back(event.get(), MSG_EVENT_NEW); 
         auction = event.get();
-        printf("A event %d announced\n", event->id_);
+        //printf("A event %d announced\n", event->id_);
 
       // End early or restart, if timed out
       } else if (clock_ - event->t_announced_ > EVENT_TIMEOUT) {
@@ -61,7 +59,7 @@ void SupervisorCentralised::handleAuctionEvents(event_queue_t& event_queue) {
           event->assigned_to_ = event->best_bidder_;
           event_queue.emplace_back(event.get(), MSG_EVENT_WON); // FIXME?
           auction = NULL;
-          printf("W robot %d won event %d\n", event->assigned_to_, event->id_);
+          //printf("W robot %d won event %d\n", event->assigned_to_, event->id_);
 
         // Restart (incl. announce) if no bids
         } else {
@@ -90,12 +88,17 @@ bool SupervisorCentralised::step(uint64_t step_size) {
     markEventsReached(event_queue);
 
     // ** Add a random new event, if the time has come
+    /*
     assert(t_next_event_ > 0);
     if (clock_ >= t_next_event_ && num_active_events_ < NUM_EVENTS) {
       addEvent();
     }
+    */
+    for(int i = 0; i < NUM_EVENTS - num_active_events_; i++) addEvent();
 
     handleAuctionEvents(event_queue);
+
+    statTotalCollisions();
     
     // Send and receive messages
     bid_t* pbid; // inbound
@@ -115,7 +118,7 @@ bool SupervisorCentralised::step(uint64_t step_size) {
           if (event->is_assigned()) {
             event_queue.emplace_back(event, MSG_EVENT_WON);
             auction = NULL;
-            printf("W robot %d won event %d\n", event->assigned_to_, event->id_);
+            //printf("W robot %d won event %d\n", event->assigned_to_, event->id_);
           }
         }
         else if(wb_receiver_get_data_size(receivers_[i]) == sizeof(message_event_status_t)){
@@ -130,7 +133,7 @@ bool SupervisorCentralised::step(uint64_t step_size) {
             event->markDone(clock_);
             num_active_events_--;
             event_queue.emplace_back(event, MSG_EVENT_DONE);
-            printf("C robot %d completed event %d\n", event->assigned_to_, event->id_);
+            //printf("C robot %d completed event %d\n", event->assigned_to_, event->id_);
           }
           else if (state == MSG_EVENT_NOT_IN_PROGRESS){
             event->reached_ = 0;
@@ -196,6 +199,7 @@ bool SupervisorCentralised::step(uint64_t step_size) {
       printf("Handled %d events in %d seconds, events handled per second = %.2f\n",
              num_events_handled_, (int) clock_ / 1000, ehr);
       printf("Performance: %f\n", perf);
+      printf("Total Collision: %d \n", stat_total_collisions_);
       return false;
     } 
     else { return true;} //continue

@@ -40,8 +40,11 @@
 #define SPEED_UNIT_RADS 0.00628  // Conversion factor from speed unit to radian per second
 #define WHEEL_RADIUS 0.0205      // Wheel radius (meters)
 #define DELTA_T TIME_STEP / 1000 // Timestep (seconds)
+
+#define MAX_SPEED 500            // Maximum speed
+#define PS_OFFSET -77            // Proximity sensor offset, to have the readings in void at around zero.
 #define BATTERY_LIFE (2*60*1000) // Max number of timesteps robot can spend performing a task (includes going and waiting until its finished)
-#define MAX_SPEED 800            // Maximum speed
+
 
 #define INVALID -999
 #define BREAK -999 // for physics plugin
@@ -55,7 +58,8 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /* Collective decision parameters */
 
-#define STATECHANGE_DIST 500 // minimum value of all sensor inputs combined to change to obstacle avoidance mode
+#define STATECHANGE_SUM 0 //500 // minimum value of all sensor inputs combined to change to obstacle avoidance mode
+#define STATECHANGE_MAX 0 //minimum value for the max reading among the 8 proximity sensors to change state to avoid.
 
 typedef enum
 {
@@ -74,7 +78,7 @@ typedef enum
 /* e-Puck parameters */
 
 #define NB_SENSORS 8
-#define BIAS_SPEED 400
+#define BIAS_SPEED 100
 
 // Weights for the Braitenberg algorithm
 // NOTE: Weights from reynolds2.h
@@ -87,8 +91,9 @@ public:
     Epuck();
     virtual ~Epuck() {}
 
+
     virtual void reset();
-    void update_state(int _sum_distances);
+    void update_state(int _sum_distances, int _max_distance);
     void update_self_motion(int msl, int msr);
     void compute_avoid_obstacle(int *msl, int *msr, int distances[]);
     void compute_go_to_goal(int *msl, int *msr);
@@ -121,6 +126,7 @@ protected:
     // int lmsg, rmsg;       // Communication variables
     int indx;             // Event index to be sent to the supervisor
     int target_list_length;
+    int collision_counter;
 
     WbDeviceTag left_motor;  // handler for left wheel of the robot
     WbDeviceTag right_motor; // handler for the right wheel of the robot

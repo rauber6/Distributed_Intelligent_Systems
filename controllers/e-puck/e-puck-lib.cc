@@ -86,7 +86,8 @@ void Epuck::reset()
     
 }
 
-void Epuck::update_state(int _sum_distances)
+
+void Epuck::update_state(int _sum_distances, int _max_distance)
 {          
 
     if (time_active + target_valid*(clock - clock_goal) + task_in_progress*(clock - clock_task) > BATTERY_LIFE){
@@ -101,7 +102,7 @@ void Epuck::update_state(int _sum_distances)
         
         state = OUT_OF_BATTERY;
     }
-    else if (_sum_distances > STATECHANGE_DIST && state == GO_TO_GOAL)
+    else if ((_sum_distances > STATECHANGE_SUM || _max_distance > STATECHANGE_MAX) && (state == GO_TO_GOAL || state == OBSTACLE_AVOID))
     {
         state = OBSTACLE_AVOID;
     }
@@ -112,7 +113,7 @@ void Epuck::update_state(int _sum_distances)
     }
     else if (target_valid && state != PERFORMING_TASK)
     {
-        if(state != GO_TO_GOAL && state != OBSTACLE_AVOID){
+        if(state != GO_TO_GOAL && state != OBSTACLE_AVOID){ //start the clock only the first time it enters go to goal
             clock_goal = clock;
         }
         state = GO_TO_GOAL;
@@ -122,7 +123,6 @@ void Epuck::update_state(int _sum_distances)
         state = DEFAULT_STATE;
     }
     else if(state == PERFORMING_TASK && (clock - clock_task) >= (get_task_time(robot_type, TaskType(target[0][3]))*1000)){
-
         // here add a new state TASK completed
         // then in each subclass in update_state_custom, do different things according to the subclass
         time_active += clock - clock_task;
@@ -164,20 +164,24 @@ void Epuck::update_self_motion(int msl, int msr) {
 
 void Epuck::compute_avoid_obstacle(int *msl, int *msr, int distances[]) 
 {
-    int d1=0,d2=0;       // motor speed 1 and 2     
-    int sensor_nb;       // FOR-loop counters    
+    double left_weights[8] = {-72, -58, -36, 8, 10, 36, 28, 18};
+    double right_weights[8] = {17, 29, 34, 10, 8, -38, -56, -76};
+    int left_adjustment = 0;
+    int right_adjustment = 0;
+    int adjustment_factor = 20; 
 
-    for(sensor_nb=0;sensor_nb<NB_SENSORS;sensor_nb++)
-    {   
-       d1 += (distances[sensor_nb]-300) * Interconn[sensor_nb];
-       d2 += (distances[sensor_nb]-300) * Interconn[sensor_nb + NB_SENSORS];
+    for (int sensor_nb = 0; sensor_nb < 8; ++sensor_nb) {
+        left_adjustment += distances[sensor_nb] * left_weights[sensor_nb];
+        right_adjustment += distances[sensor_nb] * right_weights[sensor_nb];
     }
-    d1 /= 8; d2 /= 8;  // Normalizing speeds
 
-    *msr = d1+BIAS_SPEED; 
-    *msl = d2+BIAS_SPEED; 
-    limit(msl,MAX_SPEED);
-    limit(msr,MAX_SPEED);
+    // Normalize adjustments and calculate motor speeds
+    *msl = BIAS_SPEED + (left_adjustment / adjustment_factor);   // Scale down adjustments
+    *msr = BIAS_SPEED + (right_adjustment / adjustment_factor); // Scale down adjustments
+
+    // Clamp motor speeds to the maximum allowable range
+    *msl = std::min(std::max(*msl, -MAX_SPEED), MAX_SPEED);
+    *msr = std::min(std::max(*msr, -MAX_SPEED), MAX_SPEED);
 }
 
 void Epuck::compute_go_to_goal(int *msl, int *msr) 
@@ -212,17 +216,29 @@ void Epuck::run(int ms)
     // Motor speed and sensor variables	
     int msl=0,msr=0;                // motor speed left and right
     int distances[NB_SENSORS];  // array keeping the distance sensor readings
-    int sum_distances=0;        // sum of all distance sensor inputs, used as threshold for state change.  	
+    int sum_distances= 0 ;        // sum of all distance sensor inputs, used as threshold for state change.  	
+    int max_distance = -999;           // max reading from a single sensor, used as threshold for state change.
 
     // Other variables
     int sensor_nb;
 
     // Add the weighted sensors values
-    for(sensor_nb=0;sensor_nb<NB_SENSORS;sensor_nb++)
+   for(sensor_nb=4;sensor_nb<NB_SENSORS;sensor_nb++) //particular iteration  for clearer display, to cleanup
     {  
-        distances[sensor_nb] = wb_distance_sensor_get_value(ds[sensor_nb]);
+        distances[sensor_nb] = wb_distance_sensor_get_value(ds[sensor_nb])+PS_OFFSET;
+        //if(robot_id == 2) printf("%f, ", wb_distance_sensor_get_value(ds[sensor_nb])+PS_OFFSET);
+        if(max_distance < distances[sensor_nb]) max_distance = distances[sensor_nb];
         sum_distances += distances[sensor_nb];
     }
+    for(sensor_nb=0;sensor_nb<NB_SENSORS-4;sensor_nb++)
+    {  
+        distances[sensor_nb] = wb_distance_sensor_get_value(ds[sensor_nb])+PS_OFFSET;
+        //if(robot_id == 2) printf("%f, ", wb_distance_sensor_get_value(ds[sensor_nb])+PS_OFFSET);
+        if(max_distance < distances[sensor_nb]) max_distance = distances[sensor_nb];
+        sum_distances += distances[sensor_nb];
+    }
+    
+
     if(state != OUT_OF_BATTERY){
         // Get info from supervisor
         receive_updates();
