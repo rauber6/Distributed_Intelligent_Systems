@@ -142,16 +142,16 @@ void EpuckDistributedPlan::msgEventCustom(message_t msg)
 // === print market ===
 // FIXME to be removed
 #if DEBUG
-        printf("\033[32m");
-        printf("[%d]R%d: neighbor %d is sharing its market \n", clock, robot_id, msg.sender_id);
-        printf("[%d]\tR%d: neigbors R%d market: [", clock, robot_id, msg.sender_id);
-        for (int i = 0; i < NUM_TASKS; ++i)
-        {
-            printf("%d: ", i);
-            printf("R%dB%d] - [", neighbor_market_winners[i], neighbor_market_bids[i]);
-        }
-        printf("\n");
-        printf("\033[0m");
+        // printf("\033[32m");
+        // printf("[%d]R%d: neighbor %d is sharing its market \n", clock, robot_id, msg.sender_id);
+        // printf("[%d]\tR%d: neigbors R%d market: [", clock, robot_id, msg.sender_id);
+        // for (int i = 0; i < NUM_TASKS; ++i)
+        // {
+        //     printf("%d: ", i);
+        //     printf("R%dB%d] - [", neighbor_market_winners[i], neighbor_market_bids[i]);
+        // }
+        // printf("\n");
+        // printf("\033[0m");
 #endif
         // ====================
 
@@ -280,14 +280,41 @@ void EpuckDistributedPlan::run_custom_pre_update()
 
     // PHASE 2.2
     // drop assigned task if necessary
-    if (is_assigned() && (b_length > 0))
-    { // ==-2
-// someone else is already executing my task, drop it
+    if(is_assigned() && (y_bids[assigned_task] < 0)){ // ==-2
+        // someone else is already executing my task, drop it
+        #if DEBUG
+        printf("[%d]R%d: dropping task %d because someone made it invalid (%d)\n", clock, robot_id, assigned_task, y_bids[assigned_task]); 
+        #endif
+        x[assigned_task] = y_bids[assigned_task];
 
-        // x[assigned_task] = y_bids[assigned_task];
-        // assigned_task = -1;
-        // target_list_length -= 1;
-        make_plan_valid();
+        // printf("Robot id%d b_length %d\n.", robot_id, b_length);
+        if (b_length > 1)
+        {
+            for (int i = 0; i < b_length - 1; ++i)
+            {
+                p[i] = p[i + 1];
+                b[i] = b[i + 1];
+            }
+            assigned_task = p[0];
+            target[0][0] = t[assigned_task].posX;
+            target[0][1] = t[assigned_task].posY;
+            target[0][2] = t[assigned_task].id; // FIXME assigning a uint16_t to double
+            target[0][3] = int(t[assigned_task].type);
+            target_valid = 1;
+            // time_active += clock - clock_goal;
+            clock_goal = clock;
+            target_list_length += 1;
+            // printf("Robot id%d new assigned task %d at time %d and is in state %d.\n", robot_id, assigned_task, clock_goal, state);
+
+        }
+        else
+        {
+            target_valid = 0;
+            assigned_task = -1;
+        }
+        b_length--;
+        target_list_length -= 1;
+
     }
     else if (is_assigned() && (is_my_bid_better(x[assigned_task], y_bids[assigned_task]) == 0) && (y_winners[assigned_task] != robot_id))
     {
@@ -537,7 +564,7 @@ int EpuckDistributedPlan::compute_bid(task_t task, double expected_time)
     float d = dist(task.posX, task.posY, my_pos[0], my_pos[1]);
     float t = get_task_time(robot_type, task.type);
 
-    int bid = std::floor(1 / (d / 0.1 + t + expected_time) * 1000); // 0.5 is epuck max velocity
+    int bid = std::floor(1 / (d / 0.1 + t + expected_time) * 100000); // 0.5 is epuck max velocity
     // printf("R%d: bid %.2f\n", robot_id, bid);
 
     if (bid < 0)
@@ -600,8 +627,9 @@ bool EpuckDistributedPlan::is_assigned()
 }
 
 void EpuckDistributedPlan::make_plan_valid()
-{   printf("make plan valid...........................................\n");
-    int *invalid = new int[b_length]();
+{
+    // printf("make plan valid...........................................\n");
+    int invalid[3] = {};
     int invalid_no = 0;
     for(int i = 0; i < b_length; ++i)
     {
@@ -611,30 +639,30 @@ void EpuckDistributedPlan::make_plan_valid()
             invalid_no ++;
         }
     }
-    int og_length = b_length;
-    if(invalid_no == 0) return;
-    for(int i = 0; i < og_length; ++i){
-        if(invalid[i] == 1)
-        {
+    if(invalid_no > 0){
 
-#if DEBUG
-        printf("[%d]R%d: dropping task %d because someone made it invalid (%d)\n", clock, robot_id, assigned_task, y_bids[assigned_task]);
-#endif
-            x[p[i]] = y_bids[p[i]];
+        int og_length = b_length;
 
-            for(int j = i; j < b_length - 1; ++j){
-                p[j] = p[j+1];
-                b[j] = b[j+1];
+        for(int i = 0; i < og_length; ++i){
+            if(invalid[i] == 1)
+            {
+
+    #if DEBUG
+            printf("[%d]R%d: dropping task %d because someone made it invalid (%d)\n", clock, robot_id, assigned_task, y_bids[assigned_task]);
+    #endif
+                x[p[i]] = y_bids[p[i]];
+
+                for(int j = i; j < b_length - 1; ++j){
+                    p[j] = p[j+1];
+                    b[j] = b[j+1];
+                }
+                b_length--;
             }
-            b_length--;
         }
+        if(og_length != b_length)
+            printf("Robot id%d original plan length %d, current plan length %d\n", robot_id, og_length, b_length);
+
+        if(b_length > 0) assigned_task = p[0];
+        else assigned_task = -1;
     }
-    if(og_length != b_length)
-        printf("Robot id%d original plan length %d, current plan length %d\n", robot_id, og_length, b_length);
-
-    if(b_length > 0) assigned_task = p[0];
-    else assigned_task = -1;
-
-    delete[] invalid;
-
 }
