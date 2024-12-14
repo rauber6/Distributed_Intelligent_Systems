@@ -22,7 +22,7 @@ double rand_coord() {
   return -0.45 + 0.9*RAND;  // FIXME arena dimentions????
 }
 
-double expovariate(double mu) {
+double expovariate(double mu) { //to delete?
   double uniform = RAND;
   while (uniform < 1e-7) uniform = RAND;
   return -log(uniform) * mu;
@@ -32,7 +32,7 @@ void Supervisor::addEvent() {
     events_.push_back(unique_ptr<Event>(new Event(next_event_id_++))); // add to list
     assert(num_active_events_ < NUM_EVENTS); // check max. active events not reached
     num_active_events_++;
-    t_next_event_ = clock_ + expovariate(EVENT_GENERATION_DELAY);
+    //t_next_event_ = clock_ + expovariate(EVENT_GENERATION_DELAY); //to comment
   }
 
   // Init robot and get robot_ids and receivers
@@ -118,6 +118,40 @@ void Supervisor::statTotalDistance() {
     }
   }
 
+double Supervisor::distanceBetweenRobots(uint16_t robot_id_1, uint16_t robot_id_2)
+{
+  double dx = getRobotPos(robot_id_1)[0] - getRobotPos(robot_id_2)[0];
+  double dy = getRobotPos(robot_id_1)[1] - getRobotPos(robot_id_2)[1];
+  return(sqrt(pow(dx,2) + pow(dy,2)));
+}
+
+void Supervisor::statTotalCollisions()
+{
+  for (int i = 0; i < NUM_ROBOTS; i++)
+  {
+    for (int j = 0; j < NUM_ROBOTS; j++)
+    {
+      if(i != j)
+      {
+        if(ongoing_collisions_[i][j] == 1 && distanceBetweenRobots(i, j) > COLLISION_RANGE + ROBOT_DIAMETER)
+        {
+          ongoing_collisions_[i][j] = 0;
+          ongoing_collisions_[j][i] = 0;
+        } 
+        else if(ongoing_collisions_[i][j] == 0 && distanceBetweenRobots(i, j) < COLLISION_RANGE + ROBOT_DIAMETER)
+        {
+          stat_total_collisions_++;
+          ongoing_collisions_[i][j] = 1;
+          ongoing_collisions_[j][i] = 1;
+
+          printf("collision between %d and %d \n", i, j);
+          printf("stat total collisions: %d \n", stat_total_collisions_);
+        }
+      }
+    }
+  }
+}
+
   // Reset robots & events
 void Supervisor::reset() {
     clock_ = 0;
@@ -168,4 +202,9 @@ void link_event_nodes() {
     g_event_nodes[i] = wb_supervisor_node_get_from_def(node_name);
     g_event_nodes_free.push_back(g_event_nodes[i]);
   }
+}
+
+void update_collisions()
+{
+
 }
