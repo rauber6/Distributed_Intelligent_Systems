@@ -160,117 +160,12 @@ void EpuckDistributedPlan::update_state_custom(){
         // notify supervisor
         message_event_status_t my_task = {robot_id, uint16_t(target[0][2]), assigned_task, MSG_EVENT_DONE};
         wb_emitter_send(emitter_tag_sup, &my_task, sizeof(message_event_status_t));        
-            
-
-        task_in_progress = 0;
-        target_valid = 0;
-        target_list_length = 0;
-        state = DEFAULT_STATE;
-
-        #if DEBUG
-            printf("\033[33m"); 
-            printf("[%d]R%d: task %d(id%d) completed - ", clock, robot_id, assigned_task, uint16_t(target[0][2]));
-        #endif
-
-        if(b_length > 0){
-
-            for(int i = 1; i < b_length; ++i){
-                p[i-1] = p[i];
-            }
-            b_length--;
-
-            x[assigned_task] = -1;
-            y_bids[assigned_task] = -1;
-            y_winners[assigned_task] = -1;
-
-            assigned_task = p[0];
-
-            // is my task still valid or did someone else outbid me?
-
-            if(is_assigned() && (y_bids[assigned_task] < 0)){ // ==-2
-                // someone else is already executing my task, drop it
-                #if DEBUG
-                printf("[%d]R%d: dropping task %d because someone made it invalid (%d)\n", clock, robot_id, assigned_task, y_bids[assigned_task]); 
-                #endif
-                x[assigned_task] = y_bids[assigned_task];
-                assigned_task = -1;
-                b_length = 0;
-
-                printf(" dropping 1\n");
-            } else if(is_assigned() && (is_my_bid_better(x[assigned_task], y_bids[assigned_task])==0) && (y_winners[assigned_task] != robot_id) ){
-                bool condNeighborBetterBid = ( is_my_bid_better(x[assigned_task], y_bids[assigned_task]) == 0);
-                bool condSameBid = ( x[assigned_task] == y_bids[assigned_task] );
-                bool condNeighborBetterID = (y_winners[assigned_task] < robot_id);  // if tie, task assigned to robot with lower ID
-                if( condNeighborBetterBid || (condSameBid && condNeighborBetterID)){
-                    #if DEBUG
-                        printf("[%d]R%d: dropping task %d because my bid is %d while market is %d - ",clock, robot_id, assigned_task, x[assigned_task], y_bids[assigned_task]);
-                        printf("conds %d %d %d\n", condNeighborBetterBid, condSameBid, condNeighborBetterID);
-                    #endif
-                    // drop bid
-                    x[assigned_task] = 0;
-                    assigned_task = -1;
-                    b_length = 0;
-
-                    printf(" dropping 2\n");
-                }
-            } else{
-
-            // ---------------------
-
-                y_bids[assigned_task] = x[assigned_task];
-                y_winners[assigned_task] = robot_id;
-
-                target[0][0] = t[assigned_task].posX;
-                target[0][1] = t[assigned_task].posY;
-                target[0][2] = t[assigned_task].id;  // FIXME assigning a uint16_t to double
-                target[0][3] = int(t[assigned_task].type);                
-                target_valid = 1;
-                target_list_length++;
-                state = GO_TO_GOAL;
-                printf(" moving plan and executing %d\n", assigned_task);
-
-            }
-
-        } else{
-            // reset info about the completed task
-            x[assigned_task] = -1;
-            y_bids[assigned_task] = -1;
-            y_winners[assigned_task] = -1;
-            assigned_task = -1;
-            b_length = 0;
-
-            printf(" plan is now empty\n");
-        }
-
         
+        x[assigned_task] = -1;
+        y_bids[assigned_task] = -1;
+        y_winners[assigned_task] = -1;
 
-        #if DEBUG
-            // === print x ===
-            printf("[%d]\tR%d: x: [",clock, robot_id);
-            for(int i=0; i<NUM_TASKS;++i){
-                printf("%d: ", i);
-                printf("%d] - [", x[i]);
-            }    
-            printf("\n");
-            // ====================
-            // === print x ===
-            printf("[%d]\tR%d: p: [",clock, robot_id);
-            for(int i=0; i<b_length;++i){
-                printf("%d: ", i);
-                printf("%d] - [", p[i]);
-            }    
-            printf("\n");
-            // ====================
-            // === print market ===
-            printf("[%d]\tR%d: my market: [",clock, robot_id);
-            for(int i=0; i<NUM_TASKS;++i){
-                printf("%d: ", i);
-                printf("R%dB%d] - [", y_winners[i], y_bids[i]);
-            }    
-            printf("\n");
-            // ====================
-            printf("\033[0m");
-        #endif
+        next_into_plan();
     }
 
 }
@@ -281,6 +176,7 @@ void EpuckDistributedPlan::run_custom_pre_update(){
     if(state == PERFORMING_TASK)
         return;
 
+    bool check_plan = false;
     // PHASE 2.2
     // drop assigned task if necessary
     if(is_assigned() && (y_bids[assigned_task] < 0)){ // ==-2
@@ -290,7 +186,7 @@ void EpuckDistributedPlan::run_custom_pre_update(){
         #endif
         x[assigned_task] = y_bids[assigned_task];
         assigned_task = -1;
-        b_length = 0;
+        check_plan = true;
     }
     else if(is_assigned() && (is_my_bid_better(x[assigned_task], y_bids[assigned_task])==0) && (y_winners[assigned_task] != robot_id) ){
         bool condNeighborBetterBid = ( is_my_bid_better(x[assigned_task], y_bids[assigned_task]) == 0);
@@ -304,8 +200,12 @@ void EpuckDistributedPlan::run_custom_pre_update(){
             // drop bid
             x[assigned_task] = 0;
             assigned_task = -1;
-            b_length = 0;
+            check_plan = true;
         }
+    }
+
+    if(check_plan){
+        next_into_plan();
     }
 
     // PHASE 1
@@ -585,4 +485,112 @@ double EpuckDistributedPlan::compute_cumulative_bid(int indx)
     delete[] distance_to;
 
     return dist / 0.1 + time;
+}
+
+
+void EpuckDistributedPlan::next_into_plan(){
+    task_in_progress = 0;
+    target_valid = 0;
+    target_list_length = 0;
+
+    state = DEFAULT_STATE;
+
+    #if DEBUG
+        printf("\033[33m"); 
+        printf("[%d]R%d: task %d(id%d) completed - ", clock, robot_id, assigned_task, uint16_t(target[0][2]));
+    #endif
+
+    if(b_length > 0){
+
+        for(int i = 1; i < b_length; ++i){
+            p[i-1] = p[i];
+        }
+        b_length--;
+
+
+        assigned_task = p[0];
+
+        // is my task still valid or did someone else outbid me?
+
+        if(is_assigned() && (y_bids[assigned_task] < 0)){ // ==-2
+            // someone else is already executing my task, drop it
+            #if DEBUG
+            printf("[%d]R%d: dropping task %d because someone made it invalid (%d)\n", clock, robot_id, assigned_task, y_bids[assigned_task]); 
+            #endif
+            x[assigned_task] = y_bids[assigned_task];
+            assigned_task = -1;
+            b_length = 0;
+
+            printf(" dropping 1\n");
+        } else if(is_assigned() && (is_my_bid_better(x[assigned_task], y_bids[assigned_task])==0) && (y_winners[assigned_task] != robot_id) ){
+            bool condNeighborBetterBid = ( is_my_bid_better(x[assigned_task], y_bids[assigned_task]) == 0);
+            bool condSameBid = ( x[assigned_task] == y_bids[assigned_task] );
+            bool condNeighborBetterID = (y_winners[assigned_task] < robot_id);  // if tie, task assigned to robot with lower ID
+            if( condNeighborBetterBid || (condSameBid && condNeighborBetterID)){
+                #if DEBUG
+                    printf("[%d]R%d: dropping task %d because my bid is %d while market is %d - ",clock, robot_id, assigned_task, x[assigned_task], y_bids[assigned_task]);
+                    printf("conds %d %d %d\n", condNeighborBetterBid, condSameBid, condNeighborBetterID);
+                #endif
+                // drop bid
+                x[assigned_task] = 0;
+                assigned_task = -1;
+                b_length = 0;
+
+                printf(" dropping 2\n");
+            }
+        } else{
+
+        // ---------------------
+
+            y_bids[assigned_task] = x[assigned_task];
+            y_winners[assigned_task] = robot_id;
+
+            target[0][0] = t[assigned_task].posX;
+            target[0][1] = t[assigned_task].posY;
+            target[0][2] = t[assigned_task].id;  // FIXME assigning a uint16_t to double
+            target[0][3] = int(t[assigned_task].type);                
+            target_valid = 1;
+            target_list_length++;
+            state = GO_TO_GOAL;
+            printf(" moving plan and executing %d\n", assigned_task);
+
+        }
+
+    } else{
+        // reset info about the completed task
+        assigned_task = -1;
+        b_length = 0;
+
+        printf(" plan is now empty\n");
+    }
+
+    
+
+    #if DEBUG
+        // === print x ===
+        printf("[%d]\tR%d: x: [",clock, robot_id);
+        for(int i=0; i<NUM_TASKS;++i){
+            printf("%d: ", i);
+            printf("%d] - [", x[i]);
+        }    
+        printf("\n");
+        // ====================
+        // === print x ===
+        printf("[%d]\tR%d: p: [",clock, robot_id);
+        for(int i=0; i<b_length;++i){
+            printf("%d: ", i);
+            printf("%d] - [", p[i]);
+        }    
+        printf("\n");
+        // ====================
+        // === print market ===
+        printf("[%d]\tR%d: my market: [",clock, robot_id);
+        for(int i=0; i<NUM_TASKS;++i){
+            printf("%d: ", i);
+            printf("R%dB%d] - [", y_winners[i], y_bids[i]);
+        }    
+        printf("\n");
+        // ====================
+        printf("\033[0m");
+    #endif
 }
