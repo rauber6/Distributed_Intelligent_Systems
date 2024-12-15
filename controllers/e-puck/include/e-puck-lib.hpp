@@ -209,7 +209,6 @@ class EpuckDistributedPlan : public Epuck{
         static constexpr int plan_length = 3;
 
         int b_length = 0;
-        int b[NUM_TASKS]; // budle - order of tasks in plan based on time when they were added
         int p[NUM_TASKS]; // order of tasks based on their location in the plan
 
         int x[NUM_TASKS];  // tracks tasks (-1 not announced, 0 not assigned, >0 assigned with that bid)
@@ -237,7 +236,7 @@ class EpuckDistributedPlan : public Epuck{
         int compute_bid(task_t task, double expected_time);
         double compute_cumulative_bid(int indx);
         bool is_assigned();
-        void make_plan_valid();
+        void next_into_plan();
 };
 
 double rnd(void);
