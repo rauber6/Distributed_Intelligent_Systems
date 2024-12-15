@@ -84,7 +84,6 @@ void SupervisorDistributed::reset(){
 bool SupervisorDistributed::step(uint64_t step_size)
 {
     clock_ += step_size;
-
     // Events that will be announced next or that have just been assigned/done
     // event_queue_t event_queue;
 
@@ -95,6 +94,7 @@ bool SupervisorDistributed::step(uint64_t step_size)
     //     addEvent();
     // }
 
+    statTotalCollisions();
     // Send and receive messages
     message_event_status_t *pmsg;
     for (int i = 0; i < NUM_ROBOTS; i++)
@@ -193,6 +193,8 @@ bool SupervisorDistributed::step(uint64_t step_size)
         printf("Handled %d events in %d seconds, events handled per second = %.2f\n",
                num_events_handled_, (int)clock_ / 1000, ehr);
         printf("Performance: %f\n", perf);
+        printf("Total Collision: %d \n", stat_total_collisions_);
+
         return false;
     }
     else
