@@ -32,7 +32,7 @@
 #define MAX_SPEED_WEB 6.28 // Maximum speed webots
 #define EVENT_RANGE (0.1) // also defined in supervisor-lib.hpp, to be cleaned up
 
-#define DEBUG 1
+#define DEBUG 0
 #define TIME_STEP 64 // Timestep (ms)
 #define RX_PERIOD 2  // time difference between two received elements (ms) (1000)
 

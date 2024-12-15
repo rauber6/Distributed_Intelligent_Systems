@@ -141,7 +141,7 @@ void EpuckDistributedPlan::msgEventCustom(message_t msg){
                     y_bids[i] = neighbor_market_bids[i];  // never override a state if it is currently invalid (i.e. -1)
                 }
                 if(x[i] != -1){
-                    x[i] = neighbor_market_bids[i];;  // never override a state if it is currently invalid (i.e. -1)
+                    x[i] = neighbor_market_bids[i];  // never override a state if it is currently invalid (i.e. -1)
                 }
             }
             // update my market if marker has better bid
