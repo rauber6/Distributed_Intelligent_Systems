@@ -113,8 +113,8 @@ public:
 
 protected:
     int clock;
+    int clock_prev;
     int clock_task;
-    int clock_goal;
     char task_in_progress;
     int time_active;
     uint16_t robot_id;    // Unique robot ID

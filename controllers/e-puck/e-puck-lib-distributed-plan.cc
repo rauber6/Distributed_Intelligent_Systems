@@ -350,7 +350,6 @@ void EpuckDistributedPlan::run_custom_post_update(){
     {
         task_in_progress = 1;
         clock_task = clock;
-        time_active += clock - clock_goal;
         x[assigned_task] = -2;
         y_bids[assigned_task] = -2;
         // y_winners[assigned_task] = -2;

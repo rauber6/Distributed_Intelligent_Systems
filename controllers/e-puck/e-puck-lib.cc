@@ -35,6 +35,7 @@ void Epuck::reset()
     }
 
     clock = 0;
+    clock_prev = 0;
     indx = 0;
 
     // Init target positions to "INVALID"
@@ -89,12 +90,15 @@ void Epuck::reset()
 
 void Epuck::update_state(int _sum_distances, int _max_distance)
 {          
+    if(state != STAY && state != OUT_OF_BATTERY && state != TASK_COMPLETED){
+        time_active += clock - clock_prev;
+    }
 
-    if (time_active + target_valid*(clock - clock_goal) + task_in_progress*(clock - clock_task) > BATTERY_LIFE){
+    clock_prev = clock;
+
+    if (time_active  >= BATTERY_LIFE){
 
         if(state != OUT_OF_BATTERY){
-
-            time_active += target_valid*(clock - clock_goal) + task_in_progress*(clock - clock_task);
             
             printf("Robot %d, OUT OF BATTERY, SHUT DOWN.\n", robot_id);
             printf("        Total active time: %ds.\n", (int)time_active/1000);
@@ -108,14 +112,10 @@ void Epuck::update_state(int _sum_distances, int _max_distance)
     }
     else if(target_valid && task_in_progress && state != PERFORMING_TASK) // target_valid setting to fix//target_valid setting to fix
     {
-        time_active += clock - clock_goal;
         state = PERFORMING_TASK;
     }
     else if (target_valid && state != PERFORMING_TASK)
     {
-        if(state != GO_TO_GOAL && state != OBSTACLE_AVOID){ //start the clock only the first time it enters go to goal
-            clock_goal = clock;
-        }
         state = GO_TO_GOAL;
     }
     else if(state != PERFORMING_TASK)
@@ -125,8 +125,6 @@ void Epuck::update_state(int _sum_distances, int _max_distance)
     else if(state == PERFORMING_TASK && (clock - clock_task) >= (get_task_time(robot_type, TaskType(target[0][3]))*1000)){
         // here add a new state TASK completed
         // then in each subclass in update_state_custom, do different things according to the subclass
-        time_active += clock - clock_task;
-
         state = TASK_COMPLETED;
     }
 
@@ -354,6 +352,8 @@ void Epuck::receive_updates()
             wb_motor_set_velocity(left_motor, 0);
             wb_motor_set_velocity(right_motor, 0);
             wb_robot_step(TIME_STEP);
+
+            printf("Robot id%d total active time: %ds.\n", robot_id, (int)time_active/1000);
             exit(0);
         }
         else if(msg.event_state == MSG_EVENT_DONE)
