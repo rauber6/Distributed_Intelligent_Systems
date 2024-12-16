@@ -37,7 +37,6 @@ void SupervisorDistributed::buildMessage(int16_t robot_id, const Event* event,
 }
 
 void SupervisorDistributed::reset(){
-    // printf("supervisor reset in child\n");
     Supervisor::reset();
 
     //set up receiver for comms with epucks
@@ -48,7 +47,7 @@ void SupervisorDistributed::reset(){
 
     message_t msg;
 
-    // FIXME remove this - only for debugging
+    // for debugging - shut down robots
     for (int i = NUM_ROBOTS; i < 5; i++)
     {
         msg.robot_id = i;
@@ -65,7 +64,6 @@ void SupervisorDistributed::reset(){
     }
 
     // send out tasks
-    // wb_emitter_set_channel(emitter_, WB_CHANNEL_BROADCAST);
     for(auto e : active_events_){
         // broadcast new event
         message_t msg;
@@ -84,15 +82,7 @@ void SupervisorDistributed::reset(){
 bool SupervisorDistributed::step(uint64_t step_size)
 {
     clock_ += step_size;
-    // Events that will be announced next or that have just been assigned/done
-    // event_queue_t event_queue;
 
-    // ** Add a random new event, if the time has come
-    // assert(t_next_event_ > 0);
-    // if (clock_ >= t_next_event_ && num_active_events_ < NUM_EVENTS)
-    // {
-    //     addEvent();
-    // }
 
     statTotalCollisions();
     // Send and receive messages
@@ -100,7 +90,7 @@ bool SupervisorDistributed::step(uint64_t step_size)
     for (int i = 0; i < NUM_ROBOTS; i++)
     {
         // Check if we're receiving data
-        // printf("[%lld]SV: messages in queue %d\n",clock_,wb_receiver_get_queue_length(receivers_[i]));
+
         if (wb_receiver_get_queue_length(receivers_[i]) > 0)
         {
             assert(wb_receiver_get_queue_length(receivers_[i]) > 0);
@@ -124,13 +114,10 @@ bool SupervisorDistributed::step(uint64_t step_size)
                     num_events_handled_++;
                     event->markDone(clock_);
                     num_active_events_--;
-                    // event_queue.emplace_back(event, MSG_EVENT_DONE);
                     printf("SV: task %d (id%d) completed by R%d\n",event_index, event_id, pmsg->robot_id );                    
                     
                     // send new task
                     addEvent(event_index);
-                    // printf("event created\n");
-                    // wb_emitter_set_channel(emitter_, WB_CHANNEL_BROADCAST);
                     Event e = active_events_[event_index]; // use index of completed task to retrieve the newly-generated one                    
                     message_t msg;
                     buildMessage(-1, &e, MSG_EVENT_NEW, &msg);  // robot_id set to -1 because this is broadcasted
@@ -167,7 +154,6 @@ bool SupervisorDistributed::step(uint64_t step_size)
         if (is_gps_tick)
         {
             buildMessage(i, NULL, MSG_EVENT_GPS_ONLY, &msg);
-            //        printf("sending message %d , %d \n",msg.event_id,msg.robot_id);
             while (wb_emitter_get_channel(emitter_) != i + 1)
                 wb_emitter_set_channel(emitter_, i + 1);
             wb_emitter_send(emitter_, &msg, sizeof(message_t));

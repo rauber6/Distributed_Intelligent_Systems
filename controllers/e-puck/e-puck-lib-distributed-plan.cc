@@ -15,7 +15,6 @@ EpuckDistributedPlan::EpuckDistributedPlan() : Epuck(){
 }
 
 void EpuckDistributedPlan::reset(){
-    // printf("Epuck Reset in distributed child\n");
     Epuck::reset();
     wb_emitter_set_range(emitter_tag, EMITTER_RANGE);
 
@@ -103,21 +102,6 @@ void EpuckDistributedPlan::msgEventCustom(message_t msg){
         int* neighbor_market_bids = msg.market_bids;
         int* neighbor_market_winners = msg.market_winners;
 
-        // === print market ===
-        // FIXME to be removed
-        // #if DEBUG
-        //     printf("\033[32m");
-        //     printf("[%d]R%d: neighbor %d is sharing its market \n", clock, robot_id, msg.sender_id);
-        //     printf("[%d]\tR%d: neigbors R%d market: [",clock, robot_id, msg.sender_id);
-        //     for(int i=0; i<NUM_TASKS;++i){
-        //         printf("%d: ", i);
-        //         printf("R%dB%d] - [", neighbor_market_winners[i], neighbor_market_bids[i]);
-        //     }    
-        //     printf("\n");
-        //     printf("\033[0m");
-        // #endif
-        // ====================
-
         for (int i = 0; i < NUM_TASKS; ++i) {
             if(i == newly_received_task){
                 // here it means we may update task with neighbor knoledge, but this knowledge is outdated
@@ -128,15 +112,9 @@ void EpuckDistributedPlan::msgEventCustom(message_t msg){
                 #endif
                 continue;
             }
-            // TODO what if market says -1?
-            // I think it doesnt matter because robot will get soon new task from SV
-            if(neighbor_market_bids[i] < 0)  // ==-2
+            if(neighbor_market_bids[i] < 0)
             {
                 // the current tash is being performed or has been completed, update my market accordingly
-                // x[i] = neighbor_market_bids[i]; // make task invalid
-                // y_bids[i] = neighbor_market_bids[i];
-                // y_winners[i] = -2;
-
                 if(y_bids[i] != -1){
                     y_bids[i] = neighbor_market_bids[i];  // never override a state if it is currently invalid (i.e. -1)
                 }
@@ -266,9 +244,7 @@ void EpuckDistributedPlan::run_custom_pre_update(){
             int max_index = std::distance(std::begin(h), max_bid);
 
             if( *max_bid > 0 ){
-                x[max_index] = *max_bid;
-                // y_bids[max_index] = *max_bid;
-                // y_winners[max_index] = robot_id;                
+                x[max_index] = *max_bid;               
                 p[b_length] = max_index;
                 b_length++;
             }else{
@@ -281,8 +257,8 @@ void EpuckDistributedPlan::run_custom_pre_update(){
         #if DEBUG
             printf("\033[36m");
         #endif
-        if( b_length > 0 ){  // f there is at least one valid task
-            // auto-assign bid
+        if( b_length > 0 ){  // if there is at least one valid task
+            // auto-assign bid - first task of the plan
 
             assigned_task = p[0];
 
@@ -292,7 +268,7 @@ void EpuckDistributedPlan::run_custom_pre_update(){
 
             target[0][0] = t[assigned_task].posX;
             target[0][1] = t[assigned_task].posY;
-            target[0][2] = t[assigned_task].id;  // FIXME assigning a uint16_t to double
+            target[0][2] = t[assigned_task].id;
             target[0][3] = int(t[assigned_task].type);
             target_valid = 1; //used in general state machine
             target_list_length = target_list_length+1;
@@ -352,7 +328,6 @@ void EpuckDistributedPlan::run_custom_post_update(){
         clock_task = clock;
         x[assigned_task] = -2;
         y_bids[assigned_task] = -2;
-        // y_winners[assigned_task] = -2;
         state = PERFORMING_TASK;
 
         #if DEBUG
@@ -415,19 +390,17 @@ int EpuckDistributedPlan::is_my_bid_better(int myBid, int otherBid){
         return -1: invalid bids
     */
 
-    if((myBid < 0) || (otherBid < 0)) // when does this become important ?
+    if((myBid < 0) || (otherBid < 0))
         return -1;
 
     return (myBid == compare_bids(myBid, otherBid)) ? 1 : 0;
 }
 
 int EpuckDistributedPlan::compute_bid(task_t task, double expected_time){
-    // printf("R%d: my pos %.2f %.2f - task pos: %.2f %.2f\n", robot_id, my_pos[0], my_pos[1], task.posX, task.posY);
     float d = dist(task.posX, task.posY, my_pos[0], my_pos[1]);
     float t = get_task_time(robot_type, task.type);
 
     int bid = std::floor( 1 / (d/0.5 + t + expected_time) * 10000 ); // 0.5 is epuck max velocity
-    // printf("R%d: bid %.2f\n", robot_id, bid);
 
     if(bid < 0){
         printf("\033[31mError bid < 0\033[0m\n");
@@ -446,7 +419,6 @@ bool EpuckDistributedPlan::is_assigned(){
 
 double EpuckDistributedPlan::compute_cumulative_bid(int indx)
 {
-    // printf("Compute cumulative bid\n");
     if (indx == 0)
         return 0.0;
 
@@ -461,9 +433,6 @@ double EpuckDistributedPlan::compute_cumulative_bid(int indx)
         time_to[i] = 0;
         distance_to[i] = 0;
     }
-
-    // for all the tasks inside the task list (i.e. target[i] where i goes up to target_list_length)  check if putting the current
-    // event (located at (msg.event_x, msg.event_z)) in between two task results in  a smaller distance, and modify the d accordingly.
     
     for (int i = 1; i < indx; i++)
     {
@@ -473,12 +442,6 @@ double EpuckDistributedPlan::compute_cumulative_bid(int indx)
     
     float dist = (distance_to[indx-1] + d);
     float time = get_task_time(robot_type, t[p[0]].type) + time_to[indx-1];
-
-    // bid = std::floor(1 / (dist / 0.5 + time) * 1000); // 0.5 is epuck max velocity
-
-    // printf("    Robot id%d bid %d\n", robot_id, bid);
-    // printf("        dist: %f, d: %f, t: %f\n", dist, d, time);
-    // printf("            task time %f, time to: %f", get_task_time(robot_type, task.type), time_to[indx]);
 
     delete[] time_to;
     delete[] distance_to;
@@ -519,48 +482,41 @@ void EpuckDistributedPlan::next_into_plan(){
             x[assigned_task] = y_bids[assigned_task];
             assigned_task = -1;
             b_length = 0;
-
-            printf(" dropping 1\n");
         } else if(is_assigned() && (is_my_bid_better(x[assigned_task], y_bids[assigned_task])==0) && (y_winners[assigned_task] != robot_id) ){
             bool condNeighborBetterBid = ( is_my_bid_better(x[assigned_task], y_bids[assigned_task]) == 0);
             bool condSameBid = ( x[assigned_task] == y_bids[assigned_task] );
             bool condNeighborBetterID = (y_winners[assigned_task] < robot_id);  // if tie, task assigned to robot with lower ID
             if( condNeighborBetterBid || (condSameBid && condNeighborBetterID)){
                 #if DEBUG
-                    printf("[%d]R%d: dropping task %d because my bid is %d while market is %d - ",clock, robot_id, assigned_task, x[assigned_task], y_bids[assigned_task]);
+                    printf("[%d]R%d: dropping task %d because my bid is %d while market is %d\n",clock, robot_id, assigned_task, x[assigned_task], y_bids[assigned_task]);
                     printf("conds %d %d %d\n", condNeighborBetterBid, condSameBid, condNeighborBetterID);
                 #endif
                 // drop bid
                 x[assigned_task] = 0;
                 assigned_task = -1;
                 b_length = 0;
-
-                printf(" dropping 2\n");
             }
         } else{
 
-        // ---------------------
+            // assign task and update market
 
             y_bids[assigned_task] = x[assigned_task];
             y_winners[assigned_task] = robot_id;
 
             target[0][0] = t[assigned_task].posX;
             target[0][1] = t[assigned_task].posY;
-            target[0][2] = t[assigned_task].id;  // FIXME assigning a uint16_t to double
+            target[0][2] = t[assigned_task].id;
             target[0][3] = int(t[assigned_task].type);                
             target_valid = 1;
             target_list_length++;
             state = GO_TO_GOAL;
-            printf(" moving plan and executing %d\n", assigned_task);
 
         }
 
     } else{
-        // reset info about the completed task
+        // plan is empty - reset info about the completed task
         assigned_task = -1;
         b_length = 0;
-
-        printf(" plan is now empty\n");
     }
 
     

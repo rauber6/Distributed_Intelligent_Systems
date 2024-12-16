@@ -14,11 +14,10 @@ EpuckDistributed::EpuckDistributed() : Epuck(){
 }
 
 void EpuckDistributed::reset(){
-    // printf("Epuck Reset in distributed child\n");
     Epuck::reset();
     wb_emitter_set_range(emitter_tag, EMITTER_RANGE);
 
-    // activate emitter sor SV
+    // activate emitter for SV
     emitter_tag_sup = wb_robot_get_device("emitter_inf");
     wb_emitter_set_channel(emitter_tag_sup, SUP_REC_BASE_CHANNEL + robot_id + 1);
     wb_emitter_set_range(emitter_tag_sup, -1);
@@ -102,7 +101,6 @@ void EpuckDistributed::msgEventCustom(message_t msg){
         int* neighbor_market_winners = msg.market_winners;
 
         // === print market ===
-        // FIXME to be removed
         #if DEBUG
             printf("\033[32m");
             printf("[%d]R%d: neighbor %d is sharing its market \n", clock, robot_id, msg.sender_id);
@@ -118,7 +116,7 @@ void EpuckDistributed::msgEventCustom(message_t msg){
 
         for (int i = 0; i < NUM_TASKS; ++i) {
             if(i == newly_received_task){
-                // here it means we may update task with neighbor knoledge, but this knowledge is outdated
+                // here it means we may update task with neighbor knowledge, but this knowledge is outdated
                 #if DEBUG
                     printf("\033[32m");
                     printf("[%d]R%d: neighbor %d is telling me sth about %d but I don't update because I just got it from SV \n", clock, robot_id, msg.sender_id, i);
@@ -126,15 +124,10 @@ void EpuckDistributed::msgEventCustom(message_t msg){
                 #endif
                 continue;
             }
-            // TODO what if market says -1?
-            // I think it doesnt matter because robot will get soon new task from SV
+
             if(neighbor_market_bids[i] < 0)  // ==-2
             {
                 // the current tash is being performed or has been completed, update my market accordingly
-                // x[i] = neighbor_market_bids[i]; // make task invalid
-                // y_bids[i] = neighbor_market_bids[i];
-                // y_winners[i] = -2;
-
                 if(y_bids[i] != -1){
                     y_bids[i] = neighbor_market_bids[i];  // never override a state if it is currently invalid (i.e. -1)
                 }
@@ -205,7 +198,7 @@ void EpuckDistributed::run_custom_pre_update(){
 
     // PHASE 2.2
     // drop assigned task if necessary
-    if(is_assigned() && (y_bids[assigned_task] < 0)){ // ==-2
+    if(is_assigned() && (y_bids[assigned_task] < 0)){ 
         // someone else is already executing my task, drop it
         #if DEBUG
         printf("[%d]R%d: dropping task %d because someone made it invalid (%d)\n", clock, robot_id, assigned_task, y_bids[assigned_task]); 
@@ -286,7 +279,7 @@ void EpuckDistributed::run_custom_pre_update(){
         #if DEBUG
             printf("\033[36m");
         #endif
-        if( *max_bid > 0 ){  // f there is at least one valid task
+        if( *max_bid > 0 ){  // if there is at least one valid task
             // auto-assign bid
             x[max_index] = *max_bid;
             y_bids[max_index] = *max_bid;
@@ -295,7 +288,7 @@ void EpuckDistributed::run_custom_pre_update(){
 
             target[0][0] = t[assigned_task].posX;
             target[0][1] = t[assigned_task].posY;
-            target[0][2] = t[assigned_task].id;  // FIXME assigning a uint16_t to double
+            target[0][2] = t[assigned_task].id;
             target[0][3] = int(t[assigned_task].type);
             target_valid = 1; //used in general state machine
             target_list_length = target_list_length+1;
@@ -410,19 +403,17 @@ int EpuckDistributed::is_my_bid_better(int myBid, int otherBid){
         return -1: invalid bids
     */
 
-    if((myBid < 0) || (otherBid < 0)) // when does this become important ?
+    if((myBid < 0) || (otherBid < 0))
         return -1;
 
     return (myBid == compare_bids(myBid, otherBid)) ? 1 : 0;
 }
 
 int EpuckDistributed::compute_bid(task_t task){
-    // printf("R%d: my pos %.2f %.2f - task pos: %.2f %.2f\n", robot_id, my_pos[0], my_pos[1], task.posX, task.posY);
     float d = dist(task.posX, task.posY, my_pos[0], my_pos[1]);
     float t = get_task_time(robot_type, task.type);
 
     int bid = std::floor( 1 / (d/0.5 + t) * 1000 ); // 0.5 is epuck max velocity
-    // printf("R%d: bid %.2f\n", robot_id, bid);
 
     if(bid < 0){
         printf("\033[31mError bid < 0\033[0m\n");
