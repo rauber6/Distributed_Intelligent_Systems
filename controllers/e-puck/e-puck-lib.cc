@@ -224,14 +224,12 @@ void Epuck::run(int ms)
    for(sensor_nb=4;sensor_nb<NB_SENSORS;sensor_nb++) //particular iteration  for clearer display, to cleanup
     {  
         distances[sensor_nb] = wb_distance_sensor_get_value(ds[sensor_nb])+PS_OFFSET;
-        //if(robot_id == 2) printf("%f, ", wb_distance_sensor_get_value(ds[sensor_nb])+PS_OFFSET);
         if(max_distance < distances[sensor_nb]) max_distance = distances[sensor_nb];
         sum_distances += distances[sensor_nb];
     }
     for(sensor_nb=0;sensor_nb<NB_SENSORS-4;sensor_nb++)
     {  
         distances[sensor_nb] = wb_distance_sensor_get_value(ds[sensor_nb])+PS_OFFSET;
-        //if(robot_id == 2) printf("%f, ", wb_distance_sensor_get_value(ds[sensor_nb])+PS_OFFSET);
         if(max_distance < distances[sensor_nb]) max_distance = distances[sensor_nb];
         sum_distances += distances[sensor_nb];
     }
@@ -265,7 +263,7 @@ void Epuck::run(int ms)
             compute_avoid_obstacle(&msl, &msr, distances);
             break;
 
-        case RANDOM_WALK:  // FIXME can it be safely removed? seems not te used
+        case RANDOM_WALK:
             msl = 400;
             msr = 400;
             break;
@@ -329,11 +327,6 @@ void Epuck::receive_updates()
             //return;
             exit(1);
         }
-
-        //find target list length
-        // i = 0;
-        // while(target[i][2] != INVALID){ i++;}
-        // target_list_length = i;  
         
         if(target_list_length == 0) target_valid = 0;   
 
@@ -376,8 +369,6 @@ void Epuck::receive_updates()
 
     // Communication with physics plugin (channel 0)            
     i = 0; k = 1;
-    // while((int)target[i][2] != INVALID){i++;}
-    // target_list_length = i; 
     if(target_list_length > 0)
     {        
         // Line from my position to first target

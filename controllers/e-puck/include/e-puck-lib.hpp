@@ -30,7 +30,7 @@
 #include "../supervisor/include/taskType.hpp"
 
 #define MAX_SPEED_WEB 6.28 // Maximum speed webots
-#define EVENT_RANGE (0.1) // also defined in supervisor-lib.hpp, to be cleaned up
+#define EVENT_RANGE (0.1) // also defined in supervisor-lib.hpp
 
 #define DEBUG 0
 #define TIME_STEP 64 // Timestep (ms)
@@ -50,7 +50,7 @@
 #define BREAK -999 // for physics plugin
 
 #define NUM_ROBOTS 5 // Change this also in the supervisor!
-// #define NUM_TASKS 3 //10 // FIXME this is delcared in message.h
+// #define NUM_TASKS 10 // set this in message.h
 
 #define WB_CHANNEL_BROADCAST -1
 #define SUP_REC_BASE_CHANNEL 900
@@ -102,7 +102,6 @@ public:
     bool check_if_event_reached();
     
     // Abstract methods
-    // FIXME make this protected
     virtual void msgEventDone(message_t msg) = 0;
     virtual void msgEventWon(message_t msg) = 0;
     virtual void msgEventNew(message_t msg) = 0;
@@ -174,7 +173,6 @@ class EpuckDistributed : public Epuck{
         int y_winners[NUM_TASKS];  // tracks local knowledge of the market (winner for each task)
         int h[NUM_TASKS];   // track personal valid tasks and thier corresponding bid (if =0 task not valid, otherwise this is bid)
         task_t t[NUM_TASKS];  // keep info about all tasks
-        // bool G[NUM_ROBOTS];  // adjacency vector
 
         int assigned_task;
         int newly_received_task;

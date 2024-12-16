@@ -19,7 +19,7 @@ double gauss(void)
 double rand_coord() {
   // return -1.0 + 2.0*RAND;
   // return -0.95 + 1.9*RAND;
-  return -0.45 + 0.9*RAND;  // FIXME arena dimentions????
+  return -0.45 + 0.9*RAND;
 }
 
 double expovariate(double mu) { //to delete?
@@ -29,11 +29,9 @@ double expovariate(double mu) { //to delete?
 }
 
 void Supervisor::addEvent() {
-    // printf("Parent event\n");
     events_.push_back(unique_ptr<Event>(new Event(next_event_id_++))); // add to list
     assert(num_active_events_ < NUM_EVENTS); // check max. active events not reached
     num_active_events_++;
-    //t_next_event_ = clock_ + expovariate(EVENT_GENERATION_DELAY); //to comment
   }
 
   // Init robot and get robot_ids and receivers
@@ -52,7 +50,6 @@ void Supervisor::linkRobot(uint16_t id) {
 
     // Get the respective receiver
     snprintf(node_name, sizeof(node_name), kReceiverNameFormat, id); 
-    // printf("%s %s %d", node_name, kReceiverNameFormat, id);
     receivers_[id] = wb_robot_get_device(node_name);
     if (!receivers_[id]) {
       DBG(("Missing receiver for robot #%d\n", id));
@@ -158,7 +155,6 @@ void Supervisor::statTotalCollisions()
 
   // Reset robots & events
 void Supervisor::reset() {
-    // printf("supervisor reset in parent\n");
     clock_ = 0;
 
     // initialize & link events
