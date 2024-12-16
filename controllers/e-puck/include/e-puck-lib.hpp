@@ -112,18 +112,18 @@ public:
 
 protected:
     int clock;
-    int clock_prev;
-    int clock_task;
-    char task_in_progress;
-    int time_active;
-    uint16_t robot_id;    // Unique robot ID
-    TaskType robot_type;  // robot type
-    robot_state_t state;  // State of the robot
-    double my_pos[3];     // X, Z, Theta of this robot
-    char target_valid;    // boolean; whether we are supposed to go to the target
-    double target[99][4]; // x and z coordinates of target position (max 99 targets)
-    // int lmsg, rmsg;       // Communication variables
-    int indx;             // Event index to be sent to the supervisor
+    int clock_prev;         // Previous clock time for tracking active robot time
+    int clock_task;         // Time when the robot started waiting on a task
+    char task_in_progress;  // Indicates robot waiting on a task to be completed 
+    int time_active;        // Tracks robot active time of performing tasks
+    uint16_t robot_id;      // Unique robot ID
+    TaskType robot_type;    // robot type
+    robot_state_t state;    // State of the robot
+    double my_pos[3];       // X, Z, Theta of this robot
+    char target_valid;      // boolean; whether we are supposed to go to the target
+    double target[99][4];   // x and z coordinates of target position (max 99 targets)
+    // int lmsg, rmsg;      // Communication variables
+    int indx;               // Event index to be sent to the supervisor
     int target_list_length;
     int collision_counter;
 
@@ -145,8 +145,8 @@ class EpuckCentralized : public Epuck{
         EpuckCentralized(int plan_length = 0, bool task_timeout_off = false);
         ~EpuckCentralized() override {}
     private:
-        int plan_length;
-        bool task_timeout_off; 
+        int plan_length;            // Maximum plan length for multi-task assignement task
+        bool task_timeout_off;      // Allow robot to inform the supervisor it will not be bidding for a task
         void msgEventDone(message_t msg) override;
         void msgEventWon(message_t msg) override;
         void msgEventNew(message_t msg) override;

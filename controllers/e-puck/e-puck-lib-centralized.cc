@@ -58,6 +58,9 @@ void EpuckCentralized::msgEventWon(message_t msg){
 
 void EpuckCentralized::msgEventNew(message_t msg){
 
+    // Compute bid for the newly received event 
+    // Bid is based on expect time of completition of a task
+
     if(target_list_length < plan_length){    
 
         indx = target_list_length;            
@@ -92,12 +95,9 @@ void EpuckCentralized::msgEventNew(message_t msg){
             distance_to[i] = prev_d;
             }
         }
-        d = (distance_to[indx] + d)/0.1 + get_task_time(robot_type, msg.event_type) + time_to[indx];
-        // d = (d)/0.1 + get_task_time(robot_type, msg.event_type);
+        d = (distance_to[indx] + d)/0.25 + get_task_time(robot_type, msg.event_type) + time_to[indx];
 
-        ///*** END BEST TACTIC ***///
         // Send my bid to the supervisor
-        // printf("Robot %d %c bid %f on event %d %c\n", robot_id, strType(robot_type), d, msg.event_id, strType(msg.event_type));
         const bid_t my_bid = {robot_id, msg.event_id, d, indx};
         wb_emitter_set_channel(emitter_tag, robot_id+1);
         wb_emitter_send(emitter_tag, &my_bid, sizeof(bid_t));  
@@ -106,7 +106,7 @@ void EpuckCentralized::msgEventNew(message_t msg){
         delete[] time_to;
         delete[] distance_to;    
     } 
-    else if (task_timeout_off){
+    else if (task_timeout_off){ // If the plan is complete and the robot will not bid for an event by sending a negative bid.
         const bid_t my_bid = {robot_id, msg.event_id, -1, -1};
         wb_emitter_set_channel(emitter_tag, robot_id+1);
         wb_emitter_send(emitter_tag, &my_bid, sizeof(bid_t));  
@@ -117,7 +117,8 @@ void EpuckCentralized::msgEventCustom(message_t msg){
 
     if(msg.event_state == MSG_EVENT_REACHED && !task_in_progress){
     
-        if((int)target[0][2] != msg.event_id)
+        // Only consider the distance from the target task, otherwise inform the supervisor 
+        if((int)target[0][2] != msg.event_id) 
         {
             const message_event_status_t my_task = {robot_id, msg.event_id, 0, MSG_EVENT_NOT_IN_PROGRESS};
             wb_emitter_set_channel(emitter_tag, robot_id+1);
@@ -125,7 +126,7 @@ void EpuckCentralized::msgEventCustom(message_t msg){
         } 
         else {
             task_in_progress = 1;
-            clock_task = clock;
+            clock_task = clock; // Start task timer
         }
 
     }
@@ -133,11 +134,11 @@ void EpuckCentralized::msgEventCustom(message_t msg){
 
 void EpuckCentralized::update_state_custom(){
     
+    // Inform the supervisor that the task has been completed
     if(state == TASK_COMPLETED)
     {
         state = DEFAULT_STATE;
         task_in_progress = 0;
-
 
         const message_event_status_t my_task = {robot_id, uint16_t(target[0][2]), 0, MSG_EVENT_DONE};
         wb_emitter_set_channel(emitter_tag, robot_id+1);
@@ -151,6 +152,8 @@ void EpuckCentralized::run_custom_pre_update(){
 }
 
 void EpuckCentralized::run_custom_post_update(){
+
+    // Inform supervisor of the current target
     if(target_valid)
     {
         const message_event_status_t my_task = {robot_id, uint16_t(target[0][2]), 0, MSG_EVENT_IN_PROGRESS};

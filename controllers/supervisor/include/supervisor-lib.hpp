@@ -69,22 +69,22 @@ class Event {
 
 // Public variables
 public:
-  uint16_t id_;          //event id - unique
-  Point2d pos_;          //event pos
-  WbNodeRef node_;       //event node ref
-  uint16_t assigned_to_; //id of the robot that will handle this event
+  uint16_t id_;          // event id - unique
+  Point2d pos_;          // event pos
+  WbNodeRef node_;       // event node ref
+  uint16_t assigned_to_; // id of the robot that will handle this event
 
-  uint8_t event_index;   //index in [0, NUM_EVENT -1]
+  uint8_t event_index;   // index in [0, NUM_EVENT -1]
   TaskType taskType;
 
   // Auction data
-  uint64_t t_announced_;        //time at which event was announced to robots
-  bitset<NUM_ROBOTS> bids_in_;
-  bitset<NUM_ROBOTS> bids_out_;
-  uint16_t best_bidder_;        //id of the robot that had the best bid so far
-  double best_bid_;             //value of the best bid (lower is better)
-  uint64_t t_done_;             //time at which the assigned robot reached the event
-  int bidder_index;             //index at which the bidder will put event in tasklist
+  uint64_t t_announced_;        // time at which event was announced to robots
+  bitset<NUM_ROBOTS> bids_in_;  // Tracks robots whose bids have been received
+  bitset<NUM_ROBOTS> bids_out_; // Tracks robots who opted out of the auction 
+  uint16_t best_bidder_;        // id of the robot that had the best bid so far
+  double best_bid_;             // value of the best bid (lower is better)
+  uint64_t t_done_;             // time at which the assigned robot reached the event
+  int bidder_index;             // index at which the bidder will put event in tasklist
 
   uint64_t reached_;
   uint64_t in_progress_;
@@ -234,7 +234,7 @@ class SupervisorCentralised : public Supervisor{
     private:
         Event* auction; // the event currently being auctioned
         void markEventsDone(event_queue_t& event_queue);
-        void markEventsReached(event_queue_t& event_queue);
+        void markEventsReached(event_queue_t& event_queue); 
         void handleAuctionEvents(event_queue_t& event_queue);
     public:
         SupervisorCentralised():Supervisor(){} 
