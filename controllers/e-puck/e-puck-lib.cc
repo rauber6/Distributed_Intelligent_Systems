@@ -227,7 +227,6 @@ void Epuck::run(int ms)
     int sensor_nb;
 
     // Add the weighted sensors values
-<<<<<<< HEAD
     for (sensor_nb = 4; sensor_nb < NB_SENSORS; sensor_nb++) // particular iteration  for clearer display, to cleanup
     {
         distances[sensor_nb] = wb_distance_sensor_get_value(ds[sensor_nb]) + PS_OFFSET;
@@ -242,18 +241,6 @@ void Epuck::run(int ms)
         // if(robot_id == 2) printf("%f, ", wb_distance_sensor_get_value(ds[sensor_nb])+PS_OFFSET);
         if (max_distance < distances[sensor_nb])
             max_distance = distances[sensor_nb];
-=======
-   for(sensor_nb=4;sensor_nb<NB_SENSORS;sensor_nb++) //particular iteration  for clearer display, to cleanup
-    {  
-        distances[sensor_nb] = wb_distance_sensor_get_value(ds[sensor_nb])+PS_OFFSET;
-        if(max_distance < distances[sensor_nb]) max_distance = distances[sensor_nb];
-        sum_distances += distances[sensor_nb];
-    }
-    for(sensor_nb=0;sensor_nb<NB_SENSORS-4;sensor_nb++)
-    {  
-        distances[sensor_nb] = wb_distance_sensor_get_value(ds[sensor_nb])+PS_OFFSET;
-        if(max_distance < distances[sensor_nb]) max_distance = distances[sensor_nb];
->>>>>>> 2f53390e496a835f70152a8afd2b5a1b04840ccd
         sum_distances += distances[sensor_nb];
     }
 
@@ -269,7 +256,6 @@ void Epuck::run(int ms)
     run_custom_post_update();
 
     // Set wheel speeds depending on state
-<<<<<<< HEAD
     switch (state)
     {
     case STAY:
@@ -302,40 +288,6 @@ void Epuck::run(int ms)
 
     default:
         printf("Invalid state: robot_id %d \n", robot_id);
-=======
-    switch (state) {
-        case STAY:
-            msl = 0;
-            msr = 0;
-            break;
-
-        case GO_TO_GOAL:
-            compute_go_to_goal(&msl, &msr);
-            break;
-
-        case OBSTACLE_AVOID:
-            compute_avoid_obstacle(&msl, &msr, distances);
-            break;
-
-        case RANDOM_WALK:
-        case RANDOM_WALK:
-            msl = 400;
-            msr = 400;
-            break;
-
-        case PERFORMING_TASK:
-            msl = 0;
-            msr = 0;
-            break;
-
-        case OUT_OF_BATTERY:
-            msl = 0;
-            msr = 0;
-            break;
-
-        default:
-            printf("Invalid state: robot_id %d \n", robot_id);
->>>>>>> 2f53390e496a835f70152a8afd2b5a1b04840ccd
     }
     // Set the speed
     msl_w = msl * MAX_SPEED_WEB / 1000;
@@ -388,7 +340,6 @@ void Epuck::receive_updates()
             // return;
             exit(1);
         }
-<<<<<<< HEAD
 
         // find target list length
         //  i = 0;
@@ -397,10 +348,6 @@ void Epuck::receive_updates()
 
         if (target_list_length == 0)
             target_valid = 0;
-=======
-        
-        if(target_list_length == 0) target_valid = 0;   
->>>>>>> 2f53390e496a835f70152a8afd2b5a1b04840ccd
 
         // Event state machine
         if (msg.event_state == MSG_EVENT_GPS_ONLY)
@@ -439,7 +386,6 @@ void Epuck::receive_updates()
         }
     }
 
-<<<<<<< HEAD
     // Communication with physics plugin (channel 0)
     i = 0;
     k = 1;
@@ -447,12 +393,6 @@ void Epuck::receive_updates()
     // target_list_length = i;
     if (target_list_length > 0)
     {
-=======
-    // Communication with physics plugin (channel 0)            
-    i = 0; k = 1;
-    if(target_list_length > 0)
-    {        
->>>>>>> 2f53390e496a835f70152a8afd2b5a1b04840ccd
         // Line from my position to first target
         wb_emitter_set_channel(emitter_tag, 0);
         buff[0] = BREAK; // draw new line
